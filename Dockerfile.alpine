@@ -54,6 +54,11 @@ WORKDIR /var/www/html
 
 COPY docker/docker.env /var/www/html/.env
 
+RUN mkdir -p /var/www/html/bootstrap/cache \
+    /var/www/html/storage/logs \
+    /var/www/html/storage/framework/cache \
+    /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/views
 RUN chown -R apache:apache /var/www/html
 
 RUN \
@@ -72,6 +77,18 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN mkdir -p /var/www/.composer && chown apache /var/www/.composer
 
 # Install dependencies
+# --- KUGELSICHERER RECHTE-BLOCK START ---
+USER root
+RUN mkdir -p /var/www/html/bootstrap/cache \
+    /var/www/html/storage/logs \
+    /var/www/html/storage/framework/cache \
+    /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/views \
+    && touch /var/www/html/storage/logs/laravel.log \
+    && chown -R apache:apache /var/www/html/bootstrap/cache /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache /var/www/html/storage
+# --- KUGELSICHERER RECHTE-BLOCK ENDE ---
+
 USER apache
 RUN COMPOSER_CACHE_DIR=/dev/null composer install --working-dir=/var/www/html
 
@@ -81,8 +98,7 @@ VOLUME ["/var/lib/snipeit"]
 
 # Startup script
 COPY docker/startup_alpine.sh /startup.sh
-RUN chmod +x /startup.sh
-
+RUN sed -i 's/\r$//' /startup.sh && chmod +x /startup.sh
 ENTRYPOINT ["/sbin/tini", "--"]
 
 CMD ["/startup.sh"]
