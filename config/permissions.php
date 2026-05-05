@@ -67,6 +67,16 @@ return [
             'permission' => 'assets.checkout',
             'display' => true,
         ],
+        // --- NEUE BERECHTIGUNGEN ---
+        [
+            'permission' => 'assets.checkout_self',
+            'display' => true,
+        ],
+        [
+            'permission' => 'assets.checkin_self',
+            'display' => true,
+        ],
+        // --------------------------------------------
 
         [
             'permission' => 'assets.audit',

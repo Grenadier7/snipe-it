@@ -97,7 +97,11 @@ class AssetCheckinController extends Controller
             return redirect()->route('hardware.show', $asset->id)->with('error', trans('admin/hardware/general.model_invalid_fix'));
         }
 
-        $this->authorize('checkin', $asset);
+        if ($asset->assigned_to == Auth::id() && $asset->assigned_type == User::class) {
+            $this->authorize('checkinSelf', $asset);
+        } else {
+            $this->authorize('checkin', $asset);
+        }
 
         session()->put('checkedInFrom', $asset->assignedTo->id);
         session()->put('checkout_to_type', match ($asset->assigned_type) {

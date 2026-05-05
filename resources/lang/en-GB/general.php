@@ -80,6 +80,8 @@ return [
     'checkouts_count' => 'Checkouts',
     'checkins_count' => 'Checkins',
     'checkin_and_delete' => 'Checkin and Delete',
+    'checkout_self' => 'Check assets to self',
+    'checkin_self'  => 'Checkin assets from self',
     'user_requests_count' => 'Requests',
     'city' => 'City',
     'click_here' => 'Click here',

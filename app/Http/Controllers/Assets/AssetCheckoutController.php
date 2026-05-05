@@ -76,7 +76,16 @@ class AssetCheckoutController extends Controller
             } elseif (! $asset->availableForCheckout()) {
                 return redirect()->route('hardware.index')->with('error', trans('admin/hardware/message.checkout.not_available'));
             }
-            $this->authorize('checkout', $asset);
+
+            $targetUserId = $request->input('assigned_user');
+
+            if ($targetUserId == Auth::id()) {
+                // Checkout to self
+                $this->authorize('checkoutSelf', $asset);
+            } else {
+                // Checkout to others
+                $this->authorize('checkout', $asset);
+            }
 
             if (! $asset->model) {
                 return redirect()->route('hardware.show', $asset)->with('error', trans('admin/hardware/general.model_invalid_fix'));

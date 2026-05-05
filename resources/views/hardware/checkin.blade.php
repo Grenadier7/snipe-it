@@ -100,62 +100,77 @@
                                         </div>
 
                                         <!-- Status -->
-                                        <div class="form-group {{ $errors->has('status_id') ? 'error' : '' }}">
-                                            <label for="status_id" class="col-sm-3 control-label">
-                                                {{ trans('admin/hardware/form.status') }}
-                                            </label>
-                                            <div class="col-md-8 required">
-                                                <x-input.select
-                                                    name="status_id"
-                                                    id="modal-statuslabel_types"
-                                                    :options="$statusLabel_list"
-                                                    :selected="old('status_id')"
-                                                    style="width: 100%"
-                                                    aria-label="status_id"
-                                                />
-                                                {!! $errors->first('status_id', '<span class="alert-msg" aria-hidden="true"><i class="fas fa-times" aria-hidden="true"></i> :message</span>') !!}
-                                            </div>
-                                        </div>
-
-                                        <div
-                                            class="form-group"
-                                            id="set-requestable-wrapper"
-                                            @if (! $show_requestable_toggle) style="display: none;" @endif
-                                        >
-                                            <div class="col-md-9 col-md-offset-3">
-                                                <label class="form-control" for="set_requestable">
-                                                    <input
-                                                        type="checkbox"
-                                                        value="1"
-                                                        name="set_requestable"
-                                                        id="set_requestable"
-                                                        @checked((bool) old('set_requestable', false))
+                                        @if (Auth::user()->hasAccess('assets.checkin'))
+                                            <div class="form-group {{ $errors->has('status_id') ? 'error' : '' }}">
+                                                <label for="status_id" class="col-sm-3 control-label">
+                                                    {{ trans('admin/hardware/form.status') }}
+                                                </label>
+                                                <div class="col-md-8 required">
+                                                    <x-input.select
+                                                            name="status_id"
+                                                            id="modal-statuslabel_types"
+                                                            :options="$statusLabel_list"
+                                                            :selected="old('status_id')"
+                                                            style="width: 100%"
+                                                            aria-label="status_id"
                                                     />
-                                                    {{ trans('admin/hardware/general.requestable') }}
-                                                </label>
+                                                    {!! $errors->first('status_id', '<span class="alert-msg" aria-hidden="true"><i class="fas fa-times" aria-hidden="true"></i> :message</span>') !!}
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <x-input.location-select
-                                            :label="trans('general.location')"
-                                            name="location_id"
-                                            :help_text="($asset->defaultLoc) ? trans('general.checkin_to_diff_location', ['default_location' => $asset->defaultLoc->name]) : null"
-                                            :selected="old('location_id')"
-                                        />
-
-                                        <!-- Update actual location  -->
-                                        <div class="form-group">
-                                            <div class="col-md-9 col-md-offset-3">
-                                                <label class="form-control">
-                                                    <input name="update_default_location" type="radio" value="1" checked="checked" aria-label="update_default_location" />
-                                                    {{ trans('admin/hardware/form.asset_location') }}
-                                                </label>
-                                                <label class="form-control">
-                                                    <input name="update_default_location" type="radio" value="0" aria-label="update_default_location" />
-                                                    {{ trans('admin/hardware/form.asset_location_update_default_current') }}
-                                                </label>
+                                            <div
+                                                    class="form-group"
+                                                    id="set-requestable-wrapper"
+                                                    @if (! $show_requestable_toggle) style="display: none;" @endif
+                                            >
+                                                <div class="col-md-9 col-md-offset-3">
+                                                    <label class="form-control" for="set_requestable">
+                                                        <input
+                                                                type="checkbox"
+                                                                value="1"
+                                                                name="set_requestable"
+                                                                id="set_requestable"
+                                                                @checked((bool) old('set_requestable', false))
+                                                        />
+                                                        {{ trans('admin/hardware/general.requestable') }}
+                                                    </label>
+                                                </div>
                                             </div>
-                                        </div> <!--/form-group-->
+
+                                            <x-input.location-select
+                                                    :label="trans('general.location')"
+                                                    name="location_id"
+                                                    :help_text="($asset->defaultLoc) ? trans('general.checkin_to_diff_location', ['default_location' => $asset->defaultLoc->name]) : null"
+                                                    :selected="old('location_id')"
+                                            />
+
+                                            <div class="form-group">
+                                                <div class="col-md-9 col-md-offset-3">
+                                                    <label class="form-control">
+                                                        <input name="update_default_location" type="radio" value="1" checked="checked" aria-label="update_default_location" />
+                                                        {{ trans('admin/hardware/form.asset_location') }}
+                                                    </label>
+                                                    <label class="form-control">
+                                                        <input name="update_default_location" type="radio" value="0" aria-label="update_default_location" />
+                                                        {{ trans('admin/hardware/form.asset_location_update_default_current') }}
+                                                    </label>
+                                                </div>
+                                            </div> @else
+                                            <input type="hidden" name="status_id" value="{{ $asset->status_id }}">
+                                            @if ($asset->location_id)
+                                                <input type="hidden" name="location_id" value="{{ $asset->location_id }}">
+                                            @endif
+                                            <input type="hidden" name="update_default_location" value="0">
+
+                                            <div class="form-group">
+                                                <label class="col-sm-3 control-label">{{ trans('admin/hardware/form.status') }}</label>
+                                                <div class="col-md-8">
+                                                    <p class="form-control-static text-muted">
+                                                        <em>{{ trans('general.status') }} {{ trans('general.and') }} {{ trans('general.location') }} {{ trans('general.managed_by_admin') ?? 'werden vom Admin verwaltet.' }}</em>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        @endif <!--/form-group-->
 
                                         <!-- Checkout/Checkin Date -->
                                         <div class="form-group{{ $errors->has('checkin_at') ? ' has-error' : '' }}">

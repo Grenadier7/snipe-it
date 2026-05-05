@@ -80,6 +80,8 @@ return [
     'checkouts_count' => 'Herausgaben',
     'checkins_count' => 'Rücknahmen',
     'checkin_and_delete' => 'Zurücknehmen und Löschen',
+    'checkout_self' => 'Herausgeben zu sich selbst',
+    'checkin_self'  => 'Zurücknehmen von sich selbst',
     'user_requests_count' => 'Anfragen',
     'city' => 'Stadt',
     'click_here' => 'Hier klicken',
