@@ -798,6 +798,14 @@ class ReportsController extends Controller
                 $assets->onlyTrashed();
             }
 
+            if ($request->input('assignment_status') === 'assigned') {
+                $assets->whereNotNull('assets.assigned_to');
+            }
+
+            if ($request->input('assignment_status') === 'unassigned') {
+                $assets->whereNull('assets.assigned_to');
+            }
+
             $assets->orderBy('assets.id', 'ASC')->chunk(500, function ($assets) use ($handle, $customfields, $request) {
 
                 $executionTime = microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'];
@@ -844,7 +852,7 @@ class ReportsController extends Controller
                     }
 
                     if ($request->filled('purchase_date')) {
-                        $row[] = ($asset->purchase_date) ? $asset->purchase_date : '';
+                        $row[] = ($asset->purchase_date) ? Carbon::parse($asset->purchase_date)->format('Y-m-d') : '';
                     }
 
                     if ($request->filled('purchase_cost')) {
@@ -852,7 +860,7 @@ class ReportsController extends Controller
                     }
 
                     if ($request->filled('eol')) {
-                        $row[] = ($asset->asset_eol_date != '') ? $asset->asset_eol_date : '';
+                        $row[] = ($asset->asset_eol_date != '') ? Carbon::parse($asset->asset_eol_date)->format('Y-m-d') : '';
                     }
 
                     if ($request->filled('warranty')) {
@@ -918,7 +926,7 @@ class ReportsController extends Controller
 
                     if ($request->filled('user_company')) {
                         if ($asset->checkedOutToUser()) {
-                            $row[] = ($asset->assignedto?->company) ? $asset->assignedto->company->display_name : '';
+                            $row[] = ($asset->assignedto?->company) ? $asset->assignedto?->company?->display_name : '';
                         } else {
                             $row[] = ''; // Empty string if unassigned
                         }

@@ -175,6 +175,10 @@ class AssetCheckinController extends Controller
         $asset->customFieldsForCheckinCheckout('display_checkin');
 
         if ($asset->save()) {
+            // Update the location of any child assets
+            Asset::where('assigned_type', Asset::class)
+                ->where('assigned_to', $asset->id)
+                ->update(['location_id' => $asset->location_id]);
 
             event(new CheckoutableCheckedIn($asset, $target, auth()->user(), $request->input('note'), $checkin_at, $originalValues));
 

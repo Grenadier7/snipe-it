@@ -9,9 +9,7 @@ use App\Models\ReportTemplate;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Testing\TestResponse;
 use League\Csv\Reader;
-use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Concerns\TestsPermissionsRequirement;
 use Tests\TestCase;
@@ -19,37 +17,6 @@ use Tests\TestCase;
 #[Group('custom-reporting')]
 class CustomReportTest extends TestCase implements TestsPermissionsRequirement
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        TestResponse::macro(
-            'assertSeeTextInStreamedResponse',
-            function (string $needle) {
-                Assert::assertTrue(
-                    collect(Reader::createFromString($this->streamedContent())->getRecords())
-                        ->pluck(0)
-                        ->contains($needle)
-                );
-
-                return $this;
-            }
-        );
-
-        TestResponse::macro(
-            'assertDontSeeTextInStreamedResponse',
-            function (string $needle) {
-                Assert::assertFalse(
-                    collect(Reader::createFromString($this->streamedContent())->getRecords())
-                        ->pluck(0)
-                        ->contains($needle)
-                );
-
-                return $this;
-            }
-        );
-    }
-
     public function test_requires_permission()
     {
         $this->actingAs(User::factory()->create())
@@ -121,30 +88,26 @@ class CustomReportTest extends TestCase implements TestsPermissionsRequirement
 
         $this->actingAs($superUser)
             ->post('reports/custom', ['asset_name' => '1', 'asset_tag' => '1', 'serial' => '1'])
-            ->assertSeeTextInStreamedResponse('Asset A')
-            ->assertSeeTextInStreamedResponse('Asset B');
+            ->assertSeeTextInStreamedResponse(['Asset A', 'Asset B']);
 
         $this->actingAs($userInCompanyA)
             ->post('reports/custom', ['asset_name' => '1', 'asset_tag' => '1', 'serial' => '1'])
-            ->assertSeeTextInStreamedResponse('Asset A')
-            ->assertSeeTextInStreamedResponse('Asset B');
+            ->assertSeeTextInStreamedResponse(['Asset A', 'Asset B']);
 
         $this->actingAs($userInCompanyB)
             ->post('reports/custom', ['asset_name' => '1', 'asset_tag' => '1', 'serial' => '1'])
-            ->assertSeeTextInStreamedResponse('Asset A')
-            ->assertSeeTextInStreamedResponse('Asset B');
+            ->assertSeeTextInStreamedResponse(['Asset A', 'Asset B']);
 
         $this->settings->enableMultipleFullCompanySupport();
 
         $this->actingAs($superUser)
             ->post('reports/custom', ['asset_name' => '1', 'asset_tag' => '1', 'serial' => '1'])
-            ->assertSeeTextInStreamedResponse('Asset A')
-            ->assertSeeTextInStreamedResponse('Asset B');
+            ->assertSeeTextInStreamedResponse(['Asset A', 'Asset B']);
 
         $this->actingAs($userInCompanyA)
             ->post('reports/custom', ['asset_name' => '1', 'asset_tag' => '1', 'serial' => '1'])
             ->assertSeeTextInStreamedResponse('Asset A')
-            ->assertDontSeeTextInStreamedResponse('Asset B');
+            ->assertDontSeeTextInStreamedResponse(['Asset B']);
 
         $this->actingAs($userInCompanyB)
             ->post('reports/custom', ['asset_name' => '1', 'asset_tag' => '1', 'serial' => '1'])
@@ -175,6 +138,36 @@ class CustomReportTest extends TestCase implements TestsPermissionsRequirement
             ->assertSeeTextInStreamedResponse('Asset C')
             ->assertSeeTextInStreamedResponse('Asset D')
             ->assertDontSeeTextInStreamedResponse('Asset E');
+    }
+
+    public function test_can_limit_custom_report_to_assigned_assets(): void
+    {
+        Asset::factory()->assignedToUser()->create(['name' => 'Assigned Asset']);
+        Asset::factory()->create(['name' => 'Unassigned Asset']);
+
+        $this->actingAs(User::factory()->canViewReports()->create())
+            ->post('reports/custom', [
+                'asset_name' => '1',
+                'assignment_status' => 'assigned',
+            ])
+            ->assertOk()
+            ->assertSeeTextInStreamedResponse('Assigned Asset')
+            ->assertDontSeeTextInStreamedResponse('Unassigned Asset');
+    }
+
+    public function test_can_limit_custom_report_to_unassigned_assets(): void
+    {
+        Asset::factory()->assignedToUser()->create(['name' => 'Assigned Asset']);
+        Asset::factory()->create(['name' => 'Unassigned Asset']);
+
+        $this->actingAs(User::factory()->canViewReports()->create())
+            ->post('reports/custom', [
+                'asset_name' => '1',
+                'assignment_status' => 'unassigned',
+            ])
+            ->assertOk()
+            ->assertDontSeeTextInStreamedResponse('Assigned Asset')
+            ->assertSeeTextInStreamedResponse('Unassigned Asset');
     }
 
     public function test_custom_report_decrypts_encrypted_custom_fields_when_user_has_permission(): void

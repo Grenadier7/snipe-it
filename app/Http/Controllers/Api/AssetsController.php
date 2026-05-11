@@ -1067,6 +1067,12 @@ class AssetsController extends Controller
             });
 
         if ($asset->save()) {
+
+            // Update the location of any child assets
+            Asset::where('assigned_type', Asset::class)
+                ->where('assigned_to', $asset->id)
+                ->update(['location_id' => $asset->location_id]);
+
             event(new CheckoutableCheckedIn($asset, $target, auth()->user(), $request->input('note'), $checkin_at, $originalValues));
 
             return response()->json(Helper::formatStandardApiResponse('success', [
@@ -1164,7 +1170,7 @@ class AssetsController extends Controller
                 'asset_tag' => e($asset->asset_tag),
                 'audit_by_field' => e(Str::headline($audit_by_field)),
                 'audit_key' => e($audit_key),
-                'note' => e($request->input('note')),
+                'note' => $request->filled('note') ? e($request->input('note')) : null,
                 'status_label' => e($asset->status?->display_name),
                 'status_type' => $asset->status?->getStatuslabelType(),
                 'next_audit_date' => Helper::getFormattedDateObject($asset->next_audit_date),
@@ -1205,7 +1211,7 @@ class AssetsController extends Controller
 
             // Validate the rest of the data before we turn off the event dispatcher
             if ($asset->isInvalid()) {
-                return response()->json(Helper::formatStandardApiResponse('error', ['asset_tag' => $asset->asset_tag], $asset->getErrors()));
+                return response()->json(Helper::formatStandardApiResponse('error', $payload, $asset->getErrors()));
             }
 
             /**
@@ -1444,7 +1450,7 @@ class AssetsController extends Controller
                 $label = new Label;
 
                 if (! $label) {
-                    throw new \Exception('Label object could not be created');
+                    throw new \Exception(trans('admin/labels/message.label_not_created'));
                 }
 
                 // Configure label with assets and settings
@@ -1465,7 +1471,7 @@ class AssetsController extends Controller
 
                 // Verify PDF was generated successfully
                 if (empty($pdf_content)) {
-                    throw new \Exception('PDF content is empty');
+                    throw new \Exception(trans('admin/labels/message.use_new_label_engine_for_api'));
                 }
 
                 $encoded_content = base64_encode($pdf_content);

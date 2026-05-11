@@ -67,7 +67,7 @@ class ConsumablesController extends Controller
         }
 
         if ($request->filled('name')) {
-            $consumables->where('name', '=', $request->input('name'));
+            $consumables->where('consumables.name', '=', $request->input('name'));
         }
 
         if ($request->filled('company_id')) {
@@ -79,27 +79,27 @@ class ConsumablesController extends Controller
         }
 
         if ($request->filled('category_id')) {
-            $consumables->where('category_id', '=', $request->input('category_id'));
+            $consumables->where('consumables.category_id', '=', $request->input('category_id'));
         }
 
         if ($request->filled('model_number')) {
-            $consumables->where('model_number', '=', $request->input('model_number'));
+            $consumables->where('consumables.model_number', '=', $request->input('model_number'));
         }
 
         if ($request->filled('manufacturer_id')) {
-            $consumables->where('manufacturer_id', '=', $request->input('manufacturer_id'));
+            $consumables->where('consumables.manufacturer_id', '=', $request->input('manufacturer_id'));
         }
 
         if ($request->filled('supplier_id')) {
-            $consumables->where('supplier_id', '=', $request->input('supplier_id'));
+            $consumables->where('consumables.supplier_id', '=', $request->input('supplier_id'));
         }
 
         if ($request->filled('location_id')) {
-            $consumables->where('location_id', '=', $request->input('location_id'));
+            $consumables->where('consumables.location_id', '=', $request->input('location_id'));
         }
 
         if ($request->filled('notes')) {
-            $consumables->where('notes', '=', $request->input('notes'));
+            $consumables->where('consumables.notes', '=', $request->input('notes'));
         }
 
         // Make sure the offset and limit are actually integers and do not exceed system limits
@@ -155,6 +155,7 @@ class ConsumablesController extends Controller
         $this->authorize('create', Consumable::class);
         $consumable = new Consumable;
         $consumable->fill($request->all());
+        $consumable->company_id = Company::getIdForCurrentUser($request->input('company_id'));
         $consumable = $request->handleImages($consumable);
 
         if ($consumable->save()) {
@@ -194,6 +195,7 @@ class ConsumablesController extends Controller
         $this->authorize('update', Consumable::class);
         $consumable = Consumable::findOrFail($id);
         $consumable->fill($request->all());
+        $consumable->company_id = Company::getIdForCurrentUser($request->input('company_id'));
         $consumable = $request->handleImages($consumable);
 
         if ($consumable->save()) {
