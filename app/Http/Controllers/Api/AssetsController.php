@@ -706,17 +706,34 @@ class AssetsController extends Controller
             }
         }
 
-        if ($asset->save()) {
-            if ($request->input('assigned_user')) {
-                $target = User::find(request('assigned_user'));
-            } elseif ($request->input('assigned_asset')) {
-                $target = Asset::find(request('assigned_asset'));
-            } elseif ($request->input('assigned_location')) {
-                $target = Location::find(request('assigned_location'));
+        $target = $this->resolveCheckoutTargetForAssetMutation($request);
+        $requestedCheckout = $request->filled('assigned_user') || $request->filled('assigned_asset') || $request->filled('assigned_location');
+
+        if ($requestedCheckout && (! $target)) {
+            return response()->json(Helper::formatStandardApiResponse('error', null, trans('admin/hardware/message.does_not_exist')));
+        }
+
+        if ($requestedCheckout) {
+            $companyMismatchResponse = $this->checkoutCompanyMismatchResponse($asset, $target);
+            if ($companyMismatchResponse) {
+                return $companyMismatchResponse;
             }
-            if (isset($target)) {
-                $asset->checkOut($target, auth()->user(), date('Y-m-d H:i:s'), '', 'Checked out on asset creation', e($request->input('name')));
+        }
+
+        $stored = DB::transaction(function () use ($asset, $request, $target, $requestedCheckout): bool {
+            if (! $asset->save()) {
+                return false;
             }
+
+            if ($requestedCheckout) {
+                // Keep create + optional checkout side effects atomic.
+                return $asset->checkOut($target, auth()->user(), date('Y-m-d H:i:s'), '', 'Checked out on asset creation', e($request->input('name')));
+            }
+
+            return true;
+        });
+
+        if ($stored) {
 
             if ($asset->image) {
                 $asset->image = $asset->getImageUrl();
@@ -792,24 +809,53 @@ class AssetsController extends Controller
                 }
             }
         }
-        if ($asset->save()) {
-            if (($request->filled('assigned_user')) && ($target = User::find($request->input('assigned_user')))) {
-                $location = $target->location_id;
-            } elseif (($request->filled('assigned_asset')) && ($target = Asset::find($request->input('assigned_asset')))) {
-                $location = $target->location_id;
+        $target = $this->resolveCheckoutTargetForAssetMutation($request, $asset->id);
+        $requestedCheckout = $request->filled('assigned_user') || $request->filled('assigned_asset') || $request->filled('assigned_location');
 
-                Asset::where('assigned_type', Asset::class)->where('assigned_to', $asset->id)
-                    ->update(['location_id' => $target->location_id]);
-            } elseif (($request->filled('assigned_location')) && ($target = Location::find($request->input('assigned_location')))) {
-                $location = $target->id;
+        if ($requestedCheckout && (! $target)) {
+            return response()->json(Helper::formatStandardApiResponse('error', null, trans('admin/hardware/message.does_not_exist')));
+        }
+
+        if ($requestedCheckout) {
+            $companyMismatchResponse = $this->checkoutCompanyMismatchResponse($asset, $target);
+            if ($companyMismatchResponse) {
+                return $companyMismatchResponse;
+            }
+        }
+
+        $updated = DB::transaction(function () use ($asset, $request, $target, $requestedCheckout): bool {
+            if (! $asset->save()) {
+                return false;
             }
 
-            if (isset($target)) {
+            if ($requestedCheckout) {
                 // Using `->has` preserves the asset name if the name parameter was not included in request.
                 $asset_name = request()->has('name') ? request('name') : $asset->name;
 
-                $asset->checkOut($target, auth()->user(), date('Y-m-d H:i:s'), '', 'Checked out on asset update', $asset_name, $location);
+                $location = null;
+                if ($request->filled('assigned_user')) {
+                    $location = $target->location_id;
+                } elseif ($request->filled('assigned_asset')) {
+                    $location = $target->location_id;
+                } elseif ($request->filled('assigned_location')) {
+                    $location = $target->id;
+                }
+
+                // Keep update + optional checkout side effects atomic.
+                if (! $asset->checkOut($target, auth()->user(), date('Y-m-d H:i:s'), '', 'Checked out on asset update', $asset_name, $location)) {
+                    return false;
+                }
+
+                if ($request->filled('assigned_asset')) {
+                    Asset::where('assigned_type', Asset::class)->where('assigned_to', $asset->id)
+                        ->update(['location_id' => $target->location_id]);
+                }
             }
+
+            return true;
+        });
+
+        if ($updated) {
 
             if ($asset->image) {
                 $asset->image = $asset->getImageUrl();
@@ -827,6 +873,36 @@ class AssetsController extends Controller
         }
 
         return response()->json(Helper::formatStandardApiResponse('error', null, $asset->getErrors()), 200);
+    }
+
+    private function resolveCheckoutTargetForAssetMutation(Request $request, ?int $assetId = null): User|Asset|Location|null
+    {
+        if ($request->filled('assigned_user')) {
+            return User::withoutGlobalScopes()->find($request->input('assigned_user'));
+        }
+
+        if ($request->filled('assigned_asset')) {
+            return Asset::withoutGlobalScopes()->where('id', '!=', $assetId)->find($request->input('assigned_asset'));
+        }
+
+        if ($request->filled('assigned_location')) {
+            return Location::withoutGlobalScopes()->find($request->input('assigned_location'));
+        }
+
+        return null;
+    }
+
+    private function checkoutCompanyMismatchResponse(Asset $asset, User|Asset|Location $target): ?JsonResponse
+    {
+        if ((Setting::getSettings()->full_multiple_companies_support == '1')
+            && (! is_null($asset->company_id))
+            && (! is_null($target->company_id))
+            && ((int) $asset->company_id !== (int) $target->company_id)
+        ) {
+            return response()->json(Helper::formatStandardApiResponse('error', null, trans('general.error_user_company')));
+        }
+
+        return null;
     }
 
     /**
@@ -905,6 +981,7 @@ class AssetsController extends Controller
      */
     public function checkoutByTag(AssetCheckoutRequest $request, $tag): JsonResponse
     {
+        // Use the same hardened checkout path as ID-based checkout.
         if ($asset = Asset::where('asset_tag', $tag)->first()) {
             return $this->checkout($request, $asset->id);
         }
@@ -940,19 +1017,22 @@ class AssetsController extends Controller
 
         // This item is checked out to a location
         if (request('checkout_to_type') == 'location') {
-            $target = Location::find(request('assigned_location'));
+            // Resolve unscoped target first so FMCS mismatch can be handled explicitly.
+            $target = Location::withoutGlobalScopes()->find(request('assigned_location'));
             $asset->location_id = ($target) ? $target->id : '';
             $error_payload['target_id'] = $request->input('assigned_location');
             $error_payload['target_type'] = 'location';
         } elseif (request('checkout_to_type') == 'asset') {
-            $target = Asset::where('id', '!=', $asset_id)->find(request('assigned_asset'));
+            // Resolve unscoped target first so FMCS mismatch can be handled explicitly.
+            $target = Asset::withoutGlobalScopes()->where('id', '!=', $asset_id)->find(request('assigned_asset'));
             // Override with the asset's location_id if it has one
             $asset->location_id = (($target) && (isset($target->location_id))) ? $target->location_id : '';
             $error_payload['target_id'] = $request->input('assigned_asset');
             $error_payload['target_type'] = 'asset';
         } elseif (request('checkout_to_type') == 'user') {
             // Fetch the target and set the asset's new location_id
-            $target = User::find(request('assigned_user'));
+            // Resolve unscoped target first so FMCS mismatch can be handled explicitly.
+            $target = User::withoutGlobalScopes()->find(request('assigned_user'));
             $asset->location_id = (($target) && (isset($target->location_id))) ? $target->location_id : '';
             $error_payload['target_id'] = $request->input('assigned_user');
             $error_payload['target_type'] = 'user';
@@ -971,6 +1051,16 @@ class AssetsController extends Controller
             return response()->json(Helper::formatStandardApiResponse('error', $error_payload, 'Checkout target for asset '.e($asset->asset_tag).' is invalid - '.$error_payload['target_type'].' does not exist.'));
         }
 
+        // In FMCS mode, enforce explicit same-company target checks before mutating checkout state.
+        $targetCompanyId = data_get($target, 'company_id');
+        if ((Setting::getSettings()->full_multiple_companies_support == '1')
+            && (! is_null($asset->company_id))
+            && (! is_null($targetCompanyId))
+            && ((int) $asset->company_id !== (int) $targetCompanyId)
+        ) {
+            return response()->json(Helper::formatStandardApiResponse('error', $error_payload, trans('general.error_user_company')));
+        }
+
         $checkout_at = request('checkout_at', date('Y-m-d H:i:s'));
         $expected_checkin = request('expected_checkin', null);
         $note = request('note', null);
@@ -985,7 +1075,12 @@ class AssetsController extends Controller
         //            $asset->location_id = $target->rtd_location_id;
         //        }
 
-        if ($asset->checkOut($target, auth()->user(), $checkout_at, $expected_checkin, $note, $asset_name, $asset->location_id)) {
+        // Keep checkout mutation + checkout logging/event side effects atomic.
+        $wasCheckedOut = DB::transaction(function () use ($asset, $target, $checkout_at, $expected_checkin, $note, $asset_name): bool {
+            return $asset->checkOut($target, auth()->user(), $checkout_at, $expected_checkin, $note, $asset_name, $asset->location_id);
+        });
+
+        if ($wasCheckedOut) {
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.success')));
         }
 

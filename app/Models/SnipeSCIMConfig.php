@@ -196,7 +196,12 @@ class SnipeSCIMConfig
                         public function doWrite($operation, $subop, $value, Model &$object, Path $path = null, $removeIfNotSet = false)
                         {
                             if ($value) {
-                                $object->email = $value[0]['value'];
+                                try {
+                                    $object->email = $value[0]['value'];
+                                } catch (\Exception $e) {
+                                    \Log::debug($e);
+                                    throw new SCIMException("Unknown email object:  '" . print_r($value, true) . "'", 422);
+                                }
                             } else {
                                 $object->email = null;
                             }
@@ -302,11 +307,11 @@ class SnipeSCIMConfig
                                 // addresses[type eq "work"]
                                 $matches = null;
                                 if (!preg_match('/^.+\[type eq "([a-zA-Z]+)"](?:\.([a-zA-Z]+))?$/', (string)$path, $matches)) {
-                                    throw new SCIMException("Unknown path type '$path'")->setCode(422);
+                                    throw new SCIMException("Unknown path type '$path'", 422);
                                 }
                                 $type = $matches[1];
                                 if ($type != 'work') {
-                                    throw new SCIMException("Unknown object type '$type'")->setCode(422);
+                                    throw new SCIMException("Unknown object type '$type'", 422);
                                 }
                                 $attribute = array_key_exists(2, $matches) ? $matches[2] : null;
                                 if (array_key_exists($attribute, self::$addressmap)) {
@@ -315,7 +320,7 @@ class SnipeSCIMConfig
                                 }
 
 
-                                throw new SCIMException("Could not handle path for update $path")->setCode(422);
+                                throw new SCIMException("Could not handle path for update $path", 422);
                             }
                         }
 

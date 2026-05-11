@@ -1352,8 +1352,9 @@
 
 
                             <!-- User Account: style can be found in dropdown.less -->
-                            @if (auth()->check())
+                            @auth
                                 <li class="dropdown user user-menu">
+
                                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                                         @if (auth()->user()->present()->gravatar())
                                             <img src="{{ Auth::user()->present()->gravatar() }}" class="user-image"
@@ -1367,8 +1368,11 @@
                                             <strong class="caret"></strong>
                                         </span>
                                     </a>
+
+
                                     <ul class="dropdown-menu">
-                                        <!-- User image -->
+
+                                        <!-- User assets -->
                                         @can('self.profile')
                                         <li {!! (request()->is('account/view-assets') ? ' class="active"' : '') !!}>
                                             <a href="{{ route('view-assets') }}">
@@ -1376,6 +1380,7 @@
                                                 {{ trans('general.viewassets') }}
                                             </a>
                                         </li>
+                                        @endcan
 
 
                                         @can('viewRequestable', \App\Models\Asset::class)
@@ -1386,6 +1391,7 @@
                                                 </a></li>
                                         @endcan
 
+                                        @can('self.profile')
                                         <li {!! (request()->is('account/accept') ? ' class="active"' : '') !!}>
                                             <a href="{{ route('account.accept') }}">
                                                 <x-icon type="checkmark" class="fa-fw" />
@@ -1394,7 +1400,7 @@
                                         </li>
 
                                         @endcan
-                                        <li {!! (request()->is('account/password') ? ' class="active"' : '') !!}>
+                                        <li {!! (request()->is('account/profile') ? ' class="active"' : '') !!}>
                                             <a href="{{ route('profile') }}">
                                                 <x-icon type="user" class="fa-fw" />
                                                 {{ trans('general.editprofile') }}
@@ -1403,7 +1409,7 @@
 
                                         @can('self.profile')
                                             @if (Auth::user()->ldap_import!='1')
-                                                <li {!! (request()->is('account/profile') ? ' class="active"' : '') !!}>
+                                                <li {!! (request()->is('account/password') ? ' class="active"' : '') !!}>
                                                     <a href="{{ route('account.password.index') }}">
                                                         <x-icon type="password" class="fa-fw"/>
                                                         {{ trans('general.changepassword') }}
@@ -1426,6 +1432,7 @@
                                                 </a>
                                             </li>
                                         @endcan
+                                        
                                         <li class="divider"></li>
                                         <li>
                                             <a href="{{ route('logout.get') }}"
@@ -1442,7 +1449,7 @@
                                         </li>
                                     </ul>
                                 </li>
-                            @endif
+                            @endauth
 
 
                             @can('superadmin')
@@ -1821,6 +1828,7 @@
 
                         @can('reports.view')
                             <li class="treeview{{ (request()->is('reports*') ? ' active' : '') }}">
+
                                 <a href="#" class="dropdown-toggle">
                                     <x-icon type="reports" class="fa-fw" />
                                     <span>{{ trans('general.reports') }}</span>
@@ -1828,6 +1836,11 @@
                                 </a>
 
                                 <ul class="treeview-menu">
+                                    <li {{!! (request()->is('reports') ? ' class="active"' : '') !!}}>
+                                        <a href="{{ route('reports.index') }}">
+                                            {{ trans('general.list_all') }}
+                                        </a>
+                                    </li>
                                     <li {{!! (request()->is('reports/activity') ? ' class="active"' : '') !!}}>
                                         <a href="{{ route('reports.activity') }}">
                                             {{ trans('general.activity_report') }}

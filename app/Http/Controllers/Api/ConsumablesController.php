@@ -13,9 +13,11 @@ use App\Http\Transformers\ConsumablesTransformer;
 use App\Http\Transformers\SelectlistTransformer;
 use App\Models\Company;
 use App\Models\Consumable;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ConsumablesController extends Controller
 {
@@ -306,34 +308,42 @@ class ConsumablesController extends Controller
             return response()->json(Helper::formatStandardApiResponse('error', null, trans('admin/consumables/message.checkout.unavailable', ['requested' => $consumable->checkout_qty, 'remaining' => $consumable->numRemaining()])));
         }
 
-        // Check if the user exists - @TODO:  this should probably be handled via validation, not here??
-        if (! $user = User::find($request->input('assigned_to'))) {
+        // Resolve the raw target first, then enforce FMCS explicitly.
+        // Scoped lookup can hide cross-company users and make failures ambiguous.
+        if (! $user = User::withoutGlobalScopes()->find($request->input('assigned_to'))) {
             // Return error message
             return response()->json(Helper::formatStandardApiResponse('error', null, 'No user found'));
+        }
+
+        if ((Setting::getSettings()->full_multiple_companies_support == '1') && ($consumable->company_id !== $user->company_id)) {
+            return response()->json(Helper::formatStandardApiResponse('error', null, trans('general.error_user_company')));
         }
 
         // Update the consumable data
         $consumable->assigned_to = $request->input('assigned_to');
 
-        for ($i = 0; $i < $consumable->checkout_qty; $i++) {
-            $consumable->users()->attach($consumable->id,
-                [
-                    'consumable_id' => $consumable->id,
-                    'created_by' => $user->id,
-                    'assigned_to' => $request->input('assigned_to'),
-                    'note' => $request->input('note'),
-                ]
-            );
-        }
+        // Keep pivot writes and checkout log/event atomic to avoid partial checkout state.
+        DB::transaction(function () use ($consumable, $request, $user): void {
+            for ($i = 0; $i < $consumable->checkout_qty; $i++) {
+                $consumable->users()->attach($consumable->id,
+                    [
+                        'consumable_id' => $consumable->id,
+                        'created_by' => $user->id,
+                        'assigned_to' => $request->input('assigned_to'),
+                        'note' => $request->input('note'),
+                    ]
+                );
+            }
 
-        event(new CheckoutableCheckedOut(
-            $consumable,
-            $user,
-            auth()->user(),
-            $request->input('note'),
-            [],
-            $consumable->checkout_qty,
-        ));
+            event(new CheckoutableCheckedOut(
+                $consumable,
+                $user,
+                auth()->user(),
+                $request->input('note'),
+                [],
+                $consumable->checkout_qty,
+            ));
+        });
 
         return response()->json(Helper::formatStandardApiResponse('success', null, trans('admin/consumables/message.checkout.success')));
 

@@ -56,6 +56,31 @@ class ReportsController extends Controller
         parent::__construct();
     }
 
+    public function index(): View
+    {
+        $this->authorize('reports.view');
+        $settings = Setting::getSettings();
+
+        $audit_alert_count = Asset::DueOrOverdueForAudit($settings)->count();
+        $checkin_alert_count = Asset::DueOrOverdueForCheckin($settings)->count();
+        // CheckoutAcceptance has no company_id column; scope through the checkoutable
+        // relationship so each type's CompanyableTrait global scope is applied.
+        $pending_acceptance_count = CheckoutAcceptance::pending()
+            ->whereHasMorph('checkoutable', [Asset::class, LicenseSeat::class, Accessory::class, Component::class, Consumable::class])
+            ->count();
+        $licenses_low_count = License::withCount(['freeSeats as free_seats_count'])
+            ->get()
+            ->filter(fn ($l) => $l->free_seats_count <= 0)
+            ->count();
+
+        return view('reports/index', compact(
+            'audit_alert_count',
+            'checkin_alert_count',
+            'pending_acceptance_count',
+            'licenses_low_count',
+        ));
+    }
+
     /**
      * Returns a view that displays the accessories report.
      *
@@ -252,6 +277,7 @@ class ReportsController extends Controller
 
         $response = new StreamedResponse(function () {
             Log::debug('Starting streamed response');
+            Log::debug('CSV escaping is set to: '.config('app.escape_formulas'));
 
             // Open output stream
             $handle = fopen('php://output', 'w');
@@ -287,6 +313,8 @@ class ReportsController extends Controller
                     Log::debug('Walking results: '.$executionTime);
                     $count = 0;
 
+                    $formatter = new EscapeFormula('`');
+
                     foreach ($actionlogs as $actionlog) {
                         $count++;
                         $target_name = '';
@@ -317,7 +345,15 @@ class ReportsController extends Controller
                             $actionlog->action_source,
                             $actionlog->log_meta,
                         ];
-                        fputcsv($handle, $row);
+
+                        // CSV_ESCAPE_FORMULAS is set to false in the .env
+                        if (config('app.escape_formulas') === false) {
+                            fputcsv($handle, $row);
+
+                            // CSV_ESCAPE_FORMULAS is set to true or is not set in the .env
+                        } else {
+                            fputcsv($handle, $formatter->escapeRecord($row));
+                        }
                     }
                 });
 

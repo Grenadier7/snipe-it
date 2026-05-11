@@ -15,11 +15,13 @@ use App\Http\Transformers\SelectlistTransformer;
 use App\Models\Accessory;
 use App\Models\AccessoryCheckout;
 use App\Models\Company;
+use App\Models\Setting;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class AccessoriesController extends Controller
 {
@@ -300,40 +302,49 @@ class AccessoriesController extends Controller
     {
         $this->authorize('checkout', $accessory);
         $target = $this->determineCheckoutTarget();
-        $accessory->checkout_qty = $request->input('checkout_qty', 1);
 
-        for ($i = 0; $i < $accessory->checkout_qty; $i++) {
-
-            $accessory_checkout = new AccessoryCheckout([
-                'accessory_id' => $accessory->id,
-                'created_at' => Carbon::now(),
-                'assigned_to' => $target->id,
-                'assigned_type' => $target::class,
-                'note' => $request->input('note'),
-            ]);
-
-            $accessory_checkout->created_by = auth()->id();
-            $accessory_checkout->save();
-
-            $payload = [
-                'accessory_id' => $accessory->id,
-                'assigned_to' => $target->id,
-                'assigned_type' => $target::class,
-                'note' => $request->input('note'),
-                'created_by' => auth()->id(),
-                'pivot' => $accessory_checkout->id,
-            ];
+        if ((Setting::getSettings()->full_multiple_companies_support == '1') && ($accessory->company_id !== $target->company_id)) {
+            return response()->json(Helper::formatStandardApiResponse('error', null, trans('general.error_user_company')));
         }
 
-        // Set this value to be able to pass the qty through to the event
-        event(new CheckoutableCheckedOut(
-            $accessory,
-            $target,
-            auth()->user(),
-            $request->input('note'),
-            [],
-            $accessory->checkout_qty,
-        ));
+        $accessory->checkout_qty = $request->input('checkout_qty', 1);
+        $payload = null;
+
+        // Keep checkout rows and checkout log/event atomic to avoid ghost assignments.
+        DB::transaction(function () use ($accessory, $request, $target, &$payload): void {
+            for ($i = 0; $i < $accessory->checkout_qty; $i++) {
+
+                $accessory_checkout = new AccessoryCheckout([
+                    'accessory_id' => $accessory->id,
+                    'created_at' => Carbon::now(),
+                    'assigned_to' => $target->id,
+                    'assigned_type' => $target::class,
+                    'note' => $request->input('note'),
+                ]);
+
+                $accessory_checkout->created_by = auth()->id();
+                $accessory_checkout->save();
+
+                $payload = [
+                    'accessory_id' => $accessory->id,
+                    'assigned_to' => $target->id,
+                    'assigned_type' => $target::class,
+                    'note' => $request->input('note'),
+                    'created_by' => auth()->id(),
+                    'pivot' => $accessory_checkout->id,
+                ];
+            }
+
+            // Set this value to be able to pass the qty through to the event.
+            event(new CheckoutableCheckedOut(
+                $accessory,
+                $target,
+                auth()->user(),
+                $request->input('note'),
+                [],
+                $accessory->checkout_qty,
+            ));
+        });
 
         return response()->json(Helper::formatStandardApiResponse('success', $payload, trans('admin/accessories/message.checkout.success')));
 

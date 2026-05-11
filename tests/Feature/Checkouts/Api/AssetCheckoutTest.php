@@ -4,6 +4,7 @@ namespace Tests\Feature\Checkouts\Api;
 
 use App\Events\CheckoutableCheckedOut;
 use App\Models\Asset;
+use App\Models\Company;
 use App\Models\Location;
 use App\Models\Statuslabel;
 use App\Models\User;
@@ -95,7 +96,72 @@ class AssetCheckoutTest extends TestCase
 
     public function test_cannot_checkout_across_companies_when_full_company_support_enabled()
     {
-        $this->markTestIncomplete('This is not implemented');
+        $this->settings->enableMultipleFullCompanySupport();
+
+        [$companyA, $companyB] = Company::factory()->count(2)->create();
+
+        $actorInCompanyA = User::factory()->checkoutAssets()->for($companyA)->create();
+        $assetInCompanyA = Asset::factory()->for($companyA)->create();
+        $userInCompanyB = User::factory()->for($companyB)->create();
+
+        $this->actingAsForApi($actorInCompanyA)
+            ->postJson(route('api.asset.checkout', $assetInCompanyA), [
+                'checkout_to_type' => 'user',
+                'assigned_user' => $userInCompanyB->id,
+            ])
+            ->assertOk()
+            ->assertStatusMessageIs('error')
+            ->assertMessagesAre(trans('general.error_user_company'));
+
+        $assetInCompanyA->refresh();
+
+        $this->assertNull($assetInCompanyA->assigned_to);
+        $this->assertNull($assetInCompanyA->assigned_type);
+        $this->assertEquals(0, $assetInCompanyA->checkout_counter);
+
+        $this->assertDatabaseMissing('action_logs', [
+            'created_by' => $actorInCompanyA->id,
+            'action_type' => 'checkout',
+            'target_type' => User::class,
+            'target_id' => $userInCompanyB->id,
+            'item_type' => Asset::class,
+            'item_id' => $assetInCompanyA->id,
+        ]);
+    }
+
+    public function test_checkout_by_tag_cannot_checkout_across_companies_when_full_company_support_enabled()
+    {
+        $this->settings->enableMultipleFullCompanySupport();
+
+        [$companyA, $companyB] = Company::factory()->count(2)->create();
+
+        $actorInCompanyA = User::factory()->checkoutAssets()->for($companyA)->create();
+        $assetInCompanyA = Asset::factory()->for($companyA)->create();
+        $userInCompanyB = User::factory()->for($companyB)->create();
+
+        $this->actingAsForApi($actorInCompanyA)
+            ->postJson(route('api.assets.checkout.bytag', $assetInCompanyA->asset_tag), [
+                'checkout_to_type' => 'user',
+                'assigned_user' => $userInCompanyB->id,
+            ])
+            ->assertOk()
+            ->assertStatusMessageIs('error')
+            ->assertMessagesAre(trans('general.error_user_company'));
+
+        $assetInCompanyA->refresh();
+
+        $this->assertNull($assetInCompanyA->assigned_to);
+        $this->assertNull($assetInCompanyA->assigned_type);
+        $this->assertEquals(0, $assetInCompanyA->checkout_counter);
+
+        $this->assertDatabaseMissing('action_logs', [
+            'created_by' => $actorInCompanyA->id,
+            'action_type' => 'checkout',
+            'target_type' => User::class,
+            'target_id' => $userInCompanyB->id,
+            'item_type' => Asset::class,
+            'item_id' => $assetInCompanyA->id,
+        ]);
     }
 
     /**
