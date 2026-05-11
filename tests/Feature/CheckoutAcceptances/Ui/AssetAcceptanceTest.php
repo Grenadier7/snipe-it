@@ -6,9 +6,12 @@ use App\Events\CheckoutAccepted;
 use App\Models\Actionlog;
 use App\Models\Asset;
 use App\Models\CheckoutAcceptance;
+use App\Models\CustomField;
 use App\Models\Setting;
 use App\Models\User;
+use App\Notifications\AcceptanceItemAcceptedNotification;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class AssetAcceptanceTest extends TestCase
@@ -201,6 +204,45 @@ class AssetAcceptanceTest extends TestCase
             ])
             ->whereNotNull('action_date')
             ->exists()
+        );
+    }
+
+    public function test_acceptance_email_includes_custom_fields_marked_show_in_email_and_not_encrypted(): void
+    {
+        Event::fake([CheckoutAccepted::class]);
+        Notification::fake();
+        $this->settings->enableAlertEmail();
+
+        $customField = CustomField::factory()->create([
+            'name' => 'Cost Center',
+            'show_in_email' => '1',
+            'field_encrypted' => '0',
+        ])->fresh();
+
+        $asset = Asset::factory()->hasMultipleCustomFields([$customField])->create();
+        $asset->{$customField->db_column} = 'ENG-42';
+        $asset->save();
+
+        $checkoutAcceptance = CheckoutAcceptance::factory()
+            ->pending()
+            ->for($asset, 'checkoutable')
+            ->create();
+
+        $this->actingAs($checkoutAcceptance->assignedTo)
+            ->post(route('account.store-acceptance', $checkoutAcceptance), [
+                'asset_acceptance' => 'accepted',
+            ])
+            ->assertRedirectToRoute('account.accept')
+            ->assertSessionHas('success');
+
+        Notification::assertSentTo(
+            $checkoutAcceptance,
+            function (AcceptanceItemAcceptedNotification $notification) {
+                $rendered = $notification->toMail()->render();
+
+                return str_contains($rendered, 'Cost Center')
+                    && str_contains($rendered, 'ENG-42');
+            }
         );
     }
 

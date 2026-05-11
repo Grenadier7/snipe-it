@@ -30,7 +30,7 @@
                         <div class="form-group {{ $errors->has('audit_by_field') ? 'error' : '' }}">
                             <label for="audit_by_field" class="col-md-3 control-label" id="audit_by_field">{{ trans('general.audit_by_field') }}</label>
                             <div class="col-md-8">
-                                <select name="audit_by_field" data-minimum-results-for-search="Infinity" id="audit_by_field" class="form-control select2" aria-label="audit_by_field" required>
+                                <select name="audit_by_field" data-minimum-results-for-search="Infinity" id="audit_by_field" style="width: 100% !important" class="form-control select2" aria-label="audit_by_field" required>
                                     <option value="asset_tag">{{ trans('general.asset_tag') }}</option>
                                     <option value="serial" {{ (($settings->unique_serial != '1') ? 'disabled' : '') }}>{{ trans('general.serial_number') }}</option>
                                 </select>
@@ -45,10 +45,11 @@
                         </div>
 
                         <!-- Tag/Serial -->
-                        <div class="form-group {{ $errors->has('asset_tag') ? 'error' : '' }}">
+                        <div class="form-group {{ $errors->has('audit_key') ? 'error' : '' }}">
                             <label for="audit_key" class="col-md-3 control-label" id="audit_key_label">{{ trans('general.asset_tag') }}</label>
                             <div class="col-md-8">
-                                <input type="text" class="form-control" name="audit_key" required value="{{ old('audit_key') }}">
+                                <input type="text" class="form-control" name="audit_key" id="audit_key" required
+                                       value="{{ old('audit_key') }}">
                                 {!! $errors->first('audit_key', '<span class="alert-msg" aria-hidden="true"><i class="fas fa-times" aria-hidden="true"></i> :message</span>') !!}
                             </div>
                         </div>

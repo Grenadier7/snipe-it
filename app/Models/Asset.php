@@ -228,6 +228,8 @@ class Asset extends Depreciable
     protected $searchableRelationAliases = [
         'status_label' => 'status',
         'assigned_to' => 'assignedTo',
+        'model_number' => 'model',
+        'rtd_location' => 'defaultLoc',
     ];
 
     protected static function booted(): void

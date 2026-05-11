@@ -257,9 +257,7 @@ class MaintenancesController extends Controller
 
     public function history(Request $request, Maintenance $maintenance): JsonResponse|array
     {
-        $this->authorize('view', Asset::class);
-        $asset = $maintenance->asset;
-        $this->authorize('history', $asset);
+        $this->authorize('history', $maintenance);
         $historyQuery = $maintenance->getHistory($request);
         $total = (clone $historyQuery)->count();
         $offset = ($request->input('offset') > $total) ? $total : app('api_offset_value');

@@ -9,8 +9,8 @@ use App\Http\Requests\ImageUploadRequest;
 use App\Http\Transformers\ActionlogsTransformer;
 use App\Http\Transformers\ComponentsTransformer;
 use App\Models\Asset;
+use App\Models\Company;
 use App\Models\Component;
-use App\Models\ComponentAssignment;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -80,7 +80,7 @@ class ComponentsController extends Controller
         }
 
         if ($request->filled('name')) {
-            $components->where('name', '=', $request->input('name'));
+            $components->where('components.name', '=', $request->input('name'));
         }
 
         if ($request->filled('company_id')) {
@@ -92,27 +92,27 @@ class ComponentsController extends Controller
         }
 
         if ($request->filled('category_id')) {
-            $components->where('category_id', '=', $request->input('category_id'));
+            $components->where('components.category_id', '=', $request->input('category_id'));
         }
 
         if ($request->filled('supplier_id')) {
-            $components->where('supplier_id', '=', $request->input('supplier_id'));
+            $components->where('components.supplier_id', '=', $request->input('supplier_id'));
         }
 
         if ($request->filled('manufacturer_id')) {
-            $components->where('manufacturer_id', '=', $request->input('manufacturer_id'));
+            $components->where('components.manufacturer_id', '=', $request->input('manufacturer_id'));
         }
 
         if ($request->filled('model_number')) {
-            $components->where('model_number', '=', $request->input('model_number'));
+            $components->where('components.model_number', '=', $request->input('model_number'));
         }
 
         if ($request->filled('location_id')) {
-            $components->where('location_id', '=', $request->input('location_id'));
+            $components->where('components.location_id', '=', $request->input('location_id'));
         }
 
         if ($request->filled('notes')) {
-            $components->where('notes', '=', $request->input('notes'));
+            $components->where('components.notes', '=', $request->input('notes'));
         }
 
         // Make sure the offset and limit are actually integers and do not exceed system limits
@@ -166,6 +166,7 @@ class ComponentsController extends Controller
         $this->authorize('create', Component::class);
         $component = new Component;
         $component->fill($request->all());
+        $component->company_id = Company::getIdForCurrentUser($request->input('company_id'));
         $component = $request->handleImages($component);
 
         if ($component->save()) {
@@ -206,6 +207,7 @@ class ComponentsController extends Controller
         $this->authorize('update', Component::class);
         $component = Component::findOrFail($id);
         $component->fill($request->all());
+        $component->company_id = Company::getIdForCurrentUser($request->input('company_id'));
         $component = $request->handleImages($component);
 
         if ($component->save()) {
@@ -252,13 +254,11 @@ class ComponentsController extends Controller
     {
         $this->authorize('view', Asset::class);
 
-        $component_checkouts = ComponentAssignment::where('component_id', $component->id)->with('adminuser')->with('assets');
-
         $offset = request('offset', 0);
         $limit = $request->input('limit', 50);
 
         if ($request->filled('search')) {
-            $assets = $component_checkouts->assets()
+            $assets = $component->assets()
                 ->where(function ($query) use ($request) {
                     $search_str = '%'.$request->input('search').'%';
                     $query->where('name', 'like', $search_str)

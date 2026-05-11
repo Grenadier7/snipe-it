@@ -208,6 +208,30 @@ class AcceptanceController extends Controller
             'qty' => $acceptance->qty ?? 1,
         ];
 
+        // Include asset custom fields that are explicitly allowed in outbound emails/PDFs.
+        if ($item instanceof Asset && $item->model && $item->model->fieldset) {
+            $customFields = [];
+            $fields = $item->model->fieldset->fields
+                ->where('show_in_email', true)
+                ->where('field_encrypted', false);
+
+            foreach ($fields as $field) {
+                $dbColumn = $field->db_column;
+                $value = $item->{$dbColumn};
+
+                if (! is_null($value) && $value !== '') {
+                    $customFields[] = [
+                        'label' => $field->name,
+                        'value' => $value,
+                    ];
+                }
+            }
+
+            if (! empty($customFields)) {
+                $data['custom_fields'] = $customFields;
+            }
+        }
+
         if ($request->input('asset_acceptance') === 'accepted') {
 
             $pdf_filename = 'accepted-'.$acceptance->checkoutable_id.'-'.$acceptance->display_checkoutable_type.'-eula-'.date('Y-m-d-h-i-s').'.pdf';

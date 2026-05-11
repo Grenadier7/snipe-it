@@ -4,6 +4,7 @@ namespace App\Models\Traits;
 
 use App\Models\Actionlog;
 use App\Models\Asset;
+use App\Models\ICompanyableChild;
 use App\Models\License;
 use App\Models\LicenseSeat;
 use App\Models\Location;
@@ -177,6 +178,7 @@ trait Loggable
         $log->note = $note;
         $log->action_date = $action_date;
         $log->quantity = $quantity;
+        $log->company_id = $this->resolveLoggableCompanyId();
 
         $changed = [];
         $array_to_flip = array_keys($fields_array);
@@ -219,6 +221,37 @@ trait Loggable
         }
 
         return $log;
+    }
+
+    /**
+     * Resolve the company_id that should be stamped on an action log entry.
+     *
+     * LicenseSeat does not carry a company_id directly — it belongs to a License,
+     * so we fetch the parent license's company_id in that case.  All other models
+     * that use the Loggable trait have a company_id column directly.
+     */
+    private function resolveLoggableCompanyId(): ?int
+    {
+        if (static::class === LicenseSeat::class) {
+            return $this->license?->company_id;
+        }
+
+        if (isset($this->company_id)) {
+            return $this->company_id;
+        }
+
+        // Companyable children (like Maintenance) inherit company visibility from parents.
+        if ($this instanceof ICompanyableChild) {
+            foreach ((array) $this->getCompanyableParents() as $parentRelation) {
+                $parent = $this->{$parentRelation} ?? null;
+
+                if (isset($parent?->company_id)) {
+                    return $parent->company_id;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -267,6 +300,7 @@ trait Loggable
         $log->location_id = null;
         $log->note = $note;
         $log->action_date = $action_date;
+        $log->company_id = $this->resolveLoggableCompanyId();
 
         if (! $action_date) {
             $log->action_date = date('Y-m-d H:i:s');
@@ -383,6 +417,8 @@ trait Loggable
         $log->created_by = auth()->id();
         $log->filename = $filename;
         $log->action_date = date('Y-m-d H:i:s');
+        // Explicitly stamp company_id from the item being audited so FMCS scoping works correctly.
+        $log->company_id = $this->resolveLoggableCompanyId();
         $log->logaction('audit');
 
         $params = [
@@ -468,6 +504,7 @@ trait Loggable
         $log->action_date = date('Y-m-d H:i:s');
         $log->note = $note;
         $log->created_by = $created_by;
+        $log->company_id = $this->resolveLoggableCompanyId();
         $log->logaction('create');
         $log->save();
 
@@ -494,6 +531,7 @@ trait Loggable
         $log->created_by = auth()->id();
         $log->note = $note;
         $log->target_id = null;
+        $log->company_id = $this->resolveLoggableCompanyId();
         $log->created_at = date('Y-m-d H:i:s');
         $log->action_date = date('Y-m-d H:i:s');
         $log->filename = $filename;

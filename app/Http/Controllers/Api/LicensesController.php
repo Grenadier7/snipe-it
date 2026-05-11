@@ -8,6 +8,7 @@ use App\Http\Requests\FilterRequest;
 use App\Http\Transformers\ActionlogsTransformer;
 use App\Http\Transformers\LicensesTransformer;
 use App\Http\Transformers\SelectlistTransformer;
+use App\Models\Company;
 use App\Models\License;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -179,6 +180,7 @@ class LicensesController extends Controller
         $this->authorize('create', License::class);
         $license = new License;
         $license->fill($request->all());
+        $license->company_id = Company::getIdForCurrentUser($request->input('company_id'));
 
         if ($license->save()) {
             return response()->json(Helper::formatStandardApiResponse('success', $license, trans('admin/licenses/message.create.success')));
@@ -219,6 +221,7 @@ class LicensesController extends Controller
 
         $license = License::findOrFail($id);
         $license->fill($request->all());
+        $license->company_id = Company::getIdForCurrentUser($request->input('company_id'));
 
         if ($license->save()) {
             return response()->json(Helper::formatStandardApiResponse('success', $license, trans('admin/licenses/message.update.success')));
