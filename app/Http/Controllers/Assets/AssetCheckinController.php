@@ -34,6 +34,10 @@ class AssetCheckinController extends Controller
     public function create(Asset $asset, $backto = null): View|RedirectResponse
     {
 
+        if (is_null($asset->assignedTo)) {
+            return redirect()->route('hardware.index')->with('error', trans('admin/hardware/message.checkin.already_checked_in'));
+        }
+
         if (!Auth::user()->can('checkin', $asset)) {
             if ($asset->assigned_to !== Auth::id() || !Auth::user()->can('checkinSelf', $asset)) {
                 abort(403, 'Unauthorized action.');
@@ -102,11 +106,16 @@ class AssetCheckinController extends Controller
             return redirect()->route('hardware.show', $asset->id)->with('error', trans('admin/hardware/general.model_invalid_fix'));
         }
 
-        if ($asset->assigned_to == Auth::id() && $asset->assigned_type == User::class) {
-            $this->authorize('checkinSelf', $asset);
-        } else {
-            $this->authorize('checkin', $asset);
+        if (!\Auth::user()->can('checkin', $asset)) {
+            // Wenn der User kein globales Checkin-Recht hat, prüfen wir:
+            // 1. Ist das Gerät überhaupt einem User (und nicht einem Raum) zugewiesen?
+            // 2. Gehört es genau dem eingeloggten User?
+            // 3. Hat der User das Self-Checkin Recht?
+            if ($asset->assigned_type !== \App\Models\User::class || $asset->assigned_to !== \Auth::id() || !\Auth::user()->can('checkinSelf', $asset)) {
+                abort(403, 'Unauthorized action.');
+            }
         }
+        // ---------------------------------------------
 
         session()->put('checkedInFrom', $asset->assignedTo->id);
         session()->put('checkout_to_type', match ($asset->assigned_type) {

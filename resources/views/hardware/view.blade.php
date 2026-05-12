@@ -85,7 +85,27 @@
                         <!-- this just adds a little top space -->
                         <div class="clearfix visible-lg-block" style="padding: 6px;"></div>
 
-                        <!--  well column -->
+                        <x-page-column class="col-md-12">
+                            @if (!$asset->assignedTo)
+                                @if (Auth::user()->can('checkout', $asset) || Auth::user()->can('checkoutSelf', $asset))
+                                    <x-well style="padding: 0; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                        <a href="{{ route('hardware.checkout.create', $asset->id) }}" class="btn btn-sm bg-maroon btn-checkout btn-lg btn-block" style="font-size: 22px; padding: 20px; white-space: normal;">
+                                            <x-icon type="checkout" class="fa-fw" style="margin-right: 10px; font-size: 26px;"/>
+                                            <strong>{{ trans('general.checkout') }}</strong>
+                                        </a>
+                                    </x-well>
+                                @endif
+                            @elseif (!$asset->hasOrphanedAssignment())
+                                @if (Auth::user()->can('checkin', $asset) || ($asset->assigned_to === Auth::id() && Auth::user()->can('checkinSelf', $asset)))
+                                    <x-well style="padding: 0; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                        <a href="{{ route('hardware.checkin.create', $asset->id) }}" class="btn bg-purple btn-lg btn-block" style="font-size: 22px; padding: 20px; white-space: normal;">
+                                            <x-icon type="checkin" class="fa-fw" style="margin-right: 10px; font-size: 26px;"/>
+                                            <strong>{{ trans('general.checkin') }}</strong>
+                                        </a>
+                                    </x-well>
+                                @endif
+                            @endif
+                        </x-page-column>
                         <x-page-column class="col-md-4">
                             <x-well>
                                 <x-info-element.status :infoObject="$asset"/>

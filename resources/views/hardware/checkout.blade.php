@@ -256,7 +256,7 @@
                     @else
                         <div class="box-footer text-right">
                             <a class="btn btn-link pull-left" href="{{ URL::previous() }}">{{ trans('button.cancel') }}</a>
-                            <input type="hidden" name="backto" value="index">
+                            <input type="hidden" name="redirect_option" value="index">
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-check icon-white" aria-hidden="true"></i> {{ trans('general.checkout') }}
                             </button>
