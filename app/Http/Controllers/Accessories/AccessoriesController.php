@@ -251,4 +251,14 @@ class AccessoriesController extends Controller
 
         return view('accessories.view', compact('accessory'));
     }
+
+    public function getPrintLabel($accessoryId)
+    {
+        if (is_null($accessory = \App\Models\Accessory::find($accessoryId))) {
+            return redirect()->route('accessories.index')->with('error', 'Zubehör nicht gefunden.');
+        }
+
+        // Wir geben eine spezielle Druck-Ansicht zurück
+        return view('accessories/print')->with('accessory', $accessory);
+    }
 }

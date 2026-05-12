@@ -27,6 +27,10 @@ Route::group(['prefix' => 'accessories', 'middleware' => ['auth']], function () 
         [Accessories\AccessoryCheckinController::class, 'store']
     )->name('accessories.checkin.store');
 
+    Route::get('accessories/{accessoryId}/print',
+        [App\Http\Controllers\Accessories\AccessoriesController::class, 'getPrintLabel']
+    )->name('accessories.print');
+
     Route::get('{accessory}/clone',
             [Accessories\AccessoriesController::class, 'getClone']
         )->name('clone/accessories');
