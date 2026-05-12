@@ -424,11 +424,19 @@
                     <x-slot:buttons>
 
                         @if (!$asset->assignedTo)
-                        <x-button.checkout permission="checkout" :item="$asset" :route="route('hardware.checkout.create', $asset->id)"/>
+                            @if (Auth::user()->can('checkout', $asset))
+                                <x-button.checkout permission="checkout" :item="$asset" :route="route('hardware.checkout.create', $asset->id)"/>
+                            @elseif (Auth::user()->can('checkoutSelf', $asset))
+                                <x-button.checkout permission="checkoutSelf" :item="$asset" :route="route('hardware.checkout.create', $asset->id)"/>
+                            @endif
                         @endif
 
                         @if (!$asset->hasOrphanedAssignment())
-                            <x-button.checkin permission="checkin" :item="$asset" :route="route('hardware.checkin.create', $asset->id)"/>
+                            @if (Auth::user()->can('checkin', $asset))
+                                <x-button.checkin permission="checkin" :item="$asset" :route="route('hardware.checkin.create', $asset->id)"/>
+                            @elseif ($asset->assigned_to === Auth::id() && Auth::user()->can('checkinSelf', $asset))
+                                <x-button.checkin permission="checkinSelf" :item="$asset" :route="route('hardware.checkin.create', $asset->id)"/>
+                            @endif
                         @endif
 
                         <x-button.edit :item="$asset" :route="route('hardware.edit', $asset->id)"/>

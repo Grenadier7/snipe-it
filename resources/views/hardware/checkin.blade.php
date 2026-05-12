@@ -89,12 +89,14 @@
 
                                         <!-- Asset Name -->
                                         <div class="form-group {{ $errors->has('name') ? 'error' : '' }}">
-                                            <label for="name" class="col-sm-3 control-label">
-                                                {{ trans('general.name') }}
-                                            </label>
+                                            <label for="name" class="col-sm-3 control-label">{{ trans('admin/hardware/form.name') }}</label>
                                             <div class="col-md-8">
-                                                <input class="form-control" type="text" name="name" aria-label="name"
-                                                       id="name" value="{{ old('name', $asset->name) }}"/>
+                                                @if (Auth::user()->hasAccess('assets.checkin'))
+                                                    <input class="form-control" type="text" name="name" id="name" value="{{ old('name', $asset->name) }}">
+                                                @else
+                                                    <p class="form-control-static" style="padding-top: 7px;">{{ $asset->name }}</p>
+                                                    <input type="hidden" name="name" value="{{ $asset->name }}">
+                                                @endif
                                                 {!! $errors->first('name', '<span class="alert-msg" aria-hidden="true"><i class="fas fa-times" aria-hidden="true"></i> :message</span>') !!}
                                             </div>
                                         </div>
@@ -218,16 +220,26 @@
                     </div> <!--/.box-body-->
                 </div> <!--/.box-body-->
 
-                <x-redirect_submit_options
-                        index_route="hardware.index"
-                        :button_label="trans('general.checkin')"
-                        :disabled_select="!$asset->model"
-                        :options="[
-                                'index' => trans('admin/hardware/form.redirect_to_all', ['type' => trans('general.assets')]),
-                                'item' => trans('admin/hardware/form.redirect_to_type', ['type' => trans('general.asset')]),
-                                'target' => $target_option,
-                               ]"
-                />
+                @if (Auth::user()->hasAccess('assets.checkin'))
+                    <x-redirect_submit_options
+                            index_route="hardware.index"
+                            :button_label="trans('general.checkin')"
+                            :disabled_select="!$asset->model"
+                            :options="[
+                'index' => trans('admin/hardware/form.redirect_to_all', ['type' => trans('general.assets')]),
+                'item' => trans('admin/hardware/form.redirect_to_type', ['type' => trans('general.asset')])
+            ]"
+                    />
+                @else
+                    <div class="box-footer text-right">
+                        <a class="btn btn-link pull-left" href="{{ URL::previous() }}">{{ trans('button.cancel') }}</a>
+                        <input type="hidden" name="backto" value="index">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check icon-white" aria-hidden="true"></i> {{ trans('general.checkin') }}
+                        </button>
+                    </div>
+                    @endif
+
                 </form>
 
             </div>

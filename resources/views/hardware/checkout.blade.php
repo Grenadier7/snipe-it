@@ -72,32 +72,29 @@
                         </div>
 
                         <!-- Asset Name -->
-                        <div class="form-group {{ $errors->has('name') ? 'error' : '' }}">
-                            <label for="name" class="col-md-3 control-label">
-                                {{ trans('admin/hardware/form.name') }}
-                            </label>
-
-                            <div class="col-md-7">
-                                <input class="form-control" type="text" name="name" id="name"
-                                       value="{{ old('name', $asset->name) }}" tabindex="1">
+                        <<div class="form-group {{ $errors->has('name') ? 'error' : '' }}">
+                            <label for="name" class="col-md-3 control-label">{{ trans('admin/hardware/form.name') }}</label>
+                            <div class="col-md-8">
+                                @if (Auth::user()->hasAccess('assets.checkout'))
+                                    <input class="form-control" type="text" name="name" id="name" value="{{ old('name', $asset->name) }}" tabindex="1">
+                                @else
+                                    <p class="form-control-static" style="padding-top: 7px;">{{ $asset->name }}</p>
+                                    <input type="hidden" name="name" value="{{ $asset->name }}">
+                                @endif
                                 {!! $errors->first('name', '<span class="alert-msg" aria-hidden="true"><i class="fas fa-times" aria-hidden="true"></i> :message</span>') !!}
                             </div>
                         </div>
 
                         <!-- Status -->
                         <div class="form-group {{ $errors->has('status_id') ? 'error' : '' }}">
-                            <label for="status_id" class="col-md-3 control-label">
-                                {{ trans('admin/hardware/form.status') }}
-                            </label>
+                            <label for="status_id" class="col-md-3 control-label">{{ trans('admin/hardware/form.status') }}</label>
                             <div class="col-md-7 required">
-                                <x-input.select
-                                    name="status_id"
-                                    :options="$statusLabel_list"
-                                    :selected="$asset->status_id"
-                                    style="width: 100%;"
-                                    aria-label="status_id"
-                                />
-                                {!! $errors->first('status_id', '<span class="alert-msg" aria-hidden="true"><i class="fas fa-times" aria-hidden="true"></i> :message</span>') !!}
+                                @if (Auth::user()->hasAccess('assets.checkout'))
+                                    <x-input.select name="status_id" id="status_id" :options="$statusLabel_list" :selected="old('status_id', $asset->status_id)" style="width: 100%" />
+                                @else
+                                    <p class="form-control-static" style="padding-top: 7px;">{{ $asset->assetStatus->name ?? 'Standard' }}</p>
+                                    <input type="hidden" name="status_id" value="{{ $asset->status_id }}">
+                                @endif
                             </div>
                         </div>
 
@@ -131,7 +128,7 @@
                                 <label class="col-sm-3 control-label">{{ trans('general.checkout_to') }}</label>
                                 <div class="col-md-8">
                                     <p class="form-control-static" style="padding-top: 7px;">
-                                        <i class="fas fa-user"></i> {{ Auth::user()->present()->fullName() }}
+                                        <i class="fas fa-user"></i> {{ Auth::user()->present()->display_name }}
                                         <span class="text-muted"><em>(Self-Checkout)</em></span>
                                     </p>
                                 </div>
@@ -245,17 +242,26 @@
 
                     </div> <!--/.box-body-->
 
-                    <x-redirect_submit_options
-                            index_route="hardware.index"
-                            :button_label="trans('general.checkout')"
-                            :disabled_select="!$asset->model"
-                            :options="[
-                                'index' => trans('admin/hardware/form.redirect_to_all', ['type' => trans('general.assets')]),
-                                'item' => trans('admin/hardware/form.redirect_to_type', ['type' => trans('general.asset')]),
-                                'target' => trans('admin/hardware/form.redirect_to_checked_out_to'),
-
-                               ]"
-                    />
+                    @if (Auth::user()->hasAccess('assets.checkout'))
+                        <x-redirect_submit_options
+                                index_route="hardware.index"
+                                :button_label="trans('general.checkout')"
+                                :disabled_select="!$asset->model"
+                                :options="[
+                'index' => trans('admin/hardware/form.redirect_to_all', ['type' => trans('general.assets')]),
+                'item' => trans('admin/hardware/form.redirect_to_type', ['type' => trans('general.asset')]),
+                'target' => $target_option ?? ''
+            ]"
+                        />
+                    @else
+                        <div class="box-footer text-right">
+                            <a class="btn btn-link pull-left" href="{{ URL::previous() }}">{{ trans('button.cancel') }}</a>
+                            <input type="hidden" name="backto" value="index">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check icon-white" aria-hidden="true"></i> {{ trans('general.checkout') }}
+                            </button>
+                        </div>
+                    @endif
 
                 </form>
             </div>

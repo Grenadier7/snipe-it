@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class AssetsTransformer
 {
@@ -171,8 +172,8 @@ class AssetsTransformer
         }
 
         $permissions_array['available_actions'] = [
-            'checkout' => ($asset->deleted_at == '' && Gate::allows('checkout', Asset::class)) ? true : false,
-            'checkin' => ($asset->deleted_at == '' && Gate::allows('checkin', Asset::class)) ? true : false,
+            'checkout' => ($asset->deleted_at == '' && ((Gate::allows('checkout', $asset) || Gate::allows('checkoutSelf', $asset)))) ? true : false,
+            'checkin' => ($asset->deleted_at == '' && (Gate::allows('checkin', $asset) || ($asset->assigned_to === Auth::id() && Gate::allows('checkinSelf', $asset)))) ? true : false,
             'clone' => Gate::allows('create', Asset::class) ? true : false,
             'restore' => ($asset->deleted_at != '' && Gate::allows('create', Asset::class)) ? true : false,
             'update' => ($asset->deleted_at == '' && Gate::allows('update', Asset::class)) ? true : false,

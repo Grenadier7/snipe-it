@@ -14,7 +14,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
-
+use Illuminate\Support\Facades\Auth;
 class AssetCheckoutController extends Controller
 {
     use CheckInOutRequest;
@@ -34,7 +34,9 @@ class AssetCheckoutController extends Controller
     public function create(Asset $asset): View|RedirectResponse
     {
 
-        $this->authorize('checkout', $asset);
+        if (!Auth::user()->hasAccess('assets.checkout') && !Auth::user()->hasAccess('assets.checkout_self')) {
+            abort(403);
+        }
 
         if (! $asset->model) {
             return redirect()->route('hardware.show', $asset)

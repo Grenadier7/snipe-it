@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AssetCheckinRequest;
 use App\Http\Traits\MigratesLegacyAssetLocations;
 use App\Models\Asset;
+use App\Models\User;
 use App\Models\CheckoutAcceptance;
 use App\Models\LicenseSeat;
 use App\Models\Statuslabel;
@@ -15,7 +16,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Auth;
 class AssetCheckinController extends Controller
 {
     use MigratesLegacyAssetLocations;
@@ -33,7 +34,11 @@ class AssetCheckinController extends Controller
     public function create(Asset $asset, $backto = null): View|RedirectResponse
     {
 
-        $this->authorize('checkin', $asset);
+        if (!Auth::user()->can('checkin', $asset)) {
+            if ($asset->assigned_to !== Auth::id() || !Auth::user()->can('checkinSelf', $asset)) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
 
         // This asset is already checked in, redirect
         if (is_null($asset->assignedTo)) {
