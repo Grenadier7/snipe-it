@@ -10,7 +10,10 @@ LendIT @parent
         <div class="col-md-12">
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h2 class="box-title">LendIT Inventar</h2>
+                    <h2 class="box-title">LendIT-Inventarübersicht</h2>
+                    <div class="box-tools pull-right">
+                        <a class="btn btn-sm btn-primary" href="{{ route('lendit.checkouts') }}">Ausleihübersicht</a>
+                    </div>
                 </div>
                 <div class="box-body">
                     <form method="GET" action="{{ route('lendit.dashboard') }}">
@@ -42,7 +45,7 @@ LendIT @parent
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <label for="lendit-availability">Verfugbarkeit</label>
+                                <label for="lendit-availability">Verfügbarkeit</label>
                                 <select id="lendit-availability" name="availability" class="form-control">
                                     <option value="">Alle</option>
                                     <option value="available" @selected($availability === 'available')>Verfugbar</option>
@@ -54,7 +57,7 @@ LendIT @parent
                             <div class="col-md-12">
                                 <button class="btn btn-primary" type="submit">Filtern</button>
                                 @if ($search !== '' || $categoryId || $locationId || $availability)
-                                    <a class="btn btn-default" href="{{ route('lendit.dashboard') }}">Zurucksetzen</a>
+                                    <a class="btn btn-default" href="{{ route('lendit.dashboard') }}">Zurücksetzen</a>
                                 @endif
                             </div>
                         </div>
@@ -104,7 +107,7 @@ LendIT @parent
         <div class="col-md-4">
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h2 class="box-title">Zubehor</h2>
+                    <h2 class="box-title">Zubehör</h2>
                 </div>
                 <div class="box-body table-responsive no-padding">
                     <table class="table table-striped">
@@ -112,7 +115,7 @@ LendIT @parent
                             <tr>
                                 <th>Name</th>
                                 <th>Kategorie</th>
-                                <th>Verfugbar</th>
+                                <th>Verfügbar</th>
                                 <th>Standort</th>
                             </tr>
                         </thead>
@@ -129,7 +132,7 @@ LendIT @parent
                                     <td>{{ optional($accessory->location)->name ?: '-' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4">Kein Zubehor gefunden.</td></tr>
+                                <tr><td colspan="4">Kein Zubehör gefunden.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -148,7 +151,7 @@ LendIT @parent
                             <tr>
                                 <th>Name</th>
                                 <th>Kategorie</th>
-                                <th>Verfugbar</th>
+                                <th>Verfügbar</th>
                                 <th>Standort</th>
                             </tr>
                         </thead>

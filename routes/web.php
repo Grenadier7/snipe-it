@@ -755,6 +755,14 @@ Route::middleware(['auth'])->get(
     );
 
 Route::middleware(['auth'])->get(
+    '/lendit/checkouts',
+    [LendITDashboardController::class, 'checkouts']
+)->name('lendit.checkouts')
+    ->breadcrumbs(fn (Trail $trail) => $trail->parent('lendit.dashboard')
+        ->push('Ausleihuebersicht', route('lendit.checkouts'))
+    );
+
+Route::middleware(['auth'])->get(
     '/',
     [DashboardController::class, 'index']
 )->name('home')
