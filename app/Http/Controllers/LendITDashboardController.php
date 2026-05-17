@@ -123,6 +123,8 @@ class LendITDashboardController extends Controller
 
     public function checkouts(Request $request): View
     {
+        $this->authorize('reports.view');
+
         $search = trim((string) $request->input('search', ''));
         $status = $request->input('status') === 'overdue' ? 'overdue' : 'all';
         $today = Carbon::today();

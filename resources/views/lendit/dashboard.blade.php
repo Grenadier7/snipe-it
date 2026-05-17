@@ -11,9 +11,11 @@ LendIT @parent
             <div class="box box-default">
                 <div class="box-header with-border">
                     <h2 class="box-title">LendIT-Inventarübersicht</h2>
+                    @can('reports.view')
                     <div class="box-tools pull-right">
                         <a class="btn btn-sm btn-primary" href="{{ route('lendit.checkouts') }}">Ausleihübersicht</a>
                     </div>
+                    @endcan
                 </div>
                 <div class="box-body">
                     <form method="GET" action="{{ route('lendit.dashboard') }}">
@@ -48,8 +50,8 @@ LendIT @parent
                                 <label for="lendit-availability">Verfügbarkeit</label>
                                 <select id="lendit-availability" name="availability" class="form-control">
                                     <option value="">Alle</option>
-                                    <option value="available" @selected($availability === 'available')>Verfugbar</option>
-                                    <option value="unavailable" @selected($availability === 'unavailable')>Nicht verfugbar</option>
+                                    <option value="available" @selected($availability === 'available')>Verfügbar</option>
+                                    <option value="unavailable" @selected($availability === 'unavailable')>Nicht verfügbar</option>
                                 </select>
                             </div>
                         </div>

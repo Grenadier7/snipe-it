@@ -1,7 +1,7 @@
 @extends('layouts/default')
 
 @section('title')
-LendIT Ausleihuebersicht @parent
+LendIT Ausleihübersicht @parent
 @stop
 
 @section('content')
@@ -10,7 +10,7 @@ LendIT Ausleihuebersicht @parent
         <div class="col-md-12">
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h2 class="box-title">LendIT-Ausleihuebersicht</h2>
+                    <h2 class="box-title">LendIT-Ausleihübersicht</h2>
                     <div class="box-tools pull-right">
                         <a class="btn btn-sm btn-default" href="{{ route('lendit.dashboard') }}">Inventar</a>
                     </div>
@@ -26,7 +26,7 @@ LendIT Ausleihuebersicht @parent
                                 <label for="lendit-checkout-status">Status</label>
                                 <select id="lendit-checkout-status" name="status" class="form-control">
                                     <option value="all" @selected($status === 'all')>Alle aktuellen Ausleihen</option>
-                                    <option value="overdue" @selected($status === 'overdue')>Nur überfaellig</option>
+                                    <option value="overdue" @selected($status === 'overdue')>Nur überfällig</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -82,7 +82,7 @@ LendIT Ausleihuebersicht @parent
                                     <td>{{ $expectedCheckin ? $expectedCheckin->format('d.m.Y') : '-' }}</td>
                                     <td>
                                         @if ($isOverdue)
-                                            <span class="label label-danger">Überfaellig</span>
+                                            <span class="label label-danger">Überfällig</span>
                                         @else
                                             <span class="label label-success">Aktuell</span>
                                         @endif
