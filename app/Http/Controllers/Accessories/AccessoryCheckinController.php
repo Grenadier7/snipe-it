@@ -30,8 +30,11 @@ class AccessoryCheckinController extends Controller
         }
 
         $accessory = Accessory::find($accessory_user->accessory_id);
-        $this->authorize('checkin', $accessory);
-
+        if (!\Auth::user()->can('checkin', $accessory)) {
+            if ($accessory_user->assigned_to != \Auth::id() || !\Auth::user()->can('checkinSelf', $accessory)) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
         // based on what the accessory is checked out to the target redirect option will be displayed accordingly.
         $target_option = match ($accessory_user->assigned_type) {
             'App\Models\Asset' => trans('admin/hardware/form.redirect_to_type', ['type' => trans('general.asset')]),
@@ -60,8 +63,11 @@ class AccessoryCheckinController extends Controller
         }
 
         $accessory = Accessory::find($accessory_checkout->accessory_id);
-        $this->authorize('checkin', $accessory);
-
+        if (!\Auth::user()->can('checkin', $accessory)) {
+            if ($accessory_checkout->assigned_to != \Auth::id() || !\Auth::user()->can('checkinSelf', $accessory)) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
         session()->put('checkedInFrom', $accessory_checkout->assigned_to);
         session()->put('checkout_to_type', match ($accessory_checkout->assigned_type) {
             'App\Models\User' => 'user',

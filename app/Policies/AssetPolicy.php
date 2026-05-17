@@ -26,13 +26,13 @@ class AssetPolicy extends CheckoutablePermissionsPolicy
     {
         return $user->hasAccess($this->columnName().'.files');
     }
-    public function checkoutSelf(User $user, Asset $asset): bool
+    public function checkoutSelf(User $user, $item = null): bool
     {
         // Erlaubt, wenn der User generell auschecken darf, ODER die spezifische self-Berechtigung hat
         return $user->hasAccess('assets.checkout') || $user->hasAccess('assets.checkout_self');
     }
 
-    public function checkinSelf(User $user, Asset $asset): bool
+    public function checkinSelf(User $user, $item = null): bool
     {
         // Wichtig: Hier in der Policy nur prüfen, ob er *generell* das Recht dazu hat.
         // Die Prüfung, ob das Asset *wirklich ihm* gehört, machst du im Controller.

@@ -79,10 +79,24 @@
 
           <!-- checkout selector -->
 
-             @include ('partials.forms.checkout-selector', ['user_select' => 'true','asset_select' => 'true', 'location_select' => 'true'])
-             @include ('partials.forms.edit.user-select', ['translated_name' => trans('general.user'), 'company_id' => $accessory->company_id, 'fieldname' => 'assigned_user', 'style' => (session('checkout_to_type') ?: 'user') == 'user' ? '' : 'display: none;'])
-             @include ('partials.forms.edit.asset-select', ['translated_name' => trans('general.asset'), 'asset_selector_div_id' => 'assigned_asset', 'company_id' => $accessory->company_id, 'fieldname' => 'assigned_asset', 'unselect' => 'true', 'style' => session('checkout_to_type') == 'asset' ? '' : 'display: none;'])
-             @include ('partials.forms.edit.location-select', ['translated_name' => trans('general.location'), 'fieldname' => 'assigned_location', 'company_id' => $accessory->company_id, 'style' => session('checkout_to_type') == 'location' ? '' : 'display: none;'])
+             @if (Auth::user()->hasAccess('accessories.checkout'))
+                 @include ('partials.forms.checkout-selector', ['user_select' => 'true','asset_select' => 'true', 'location_select' => 'true'])
+                 @include ('partials.forms.edit.user-select', ['translated_name' => trans('general.user'), 'company_id' => $accessory->company_id, 'fieldname' => 'assigned_user', 'style' => (session('checkout_to_type') ?: 'user') == 'user' ? '' : 'display: none;'])
+                 @include ('partials.forms.edit.asset-select', ['translated_name' => trans('general.asset'), 'asset_selector_div_id' => 'assigned_asset', 'company_id' => $accessory->company_id, 'fieldname' => 'assigned_asset', 'unselect' => 'true', 'style' => session('checkout_to_type') == 'asset' ? '' : 'display: none;'])
+                 @include ('partials.forms.edit.location-select', ['translated_name' => trans('general.location'), 'fieldname' => 'assigned_location', 'company_id' => $accessory->company_id, 'style' => session('checkout_to_type') == 'location' ? '' : 'display: none;'])
+             @else
+                 <div class="form-group">
+                     <label class="col-sm-3 control-label">{{ trans('admin/hardware/form.checkout_to') }}</label>
+                     <div class="col-md-8">
+                         <p class="form-control-static" style="padding-top: 7px;">
+                             <i class="fas fa-user"></i> {{ Auth::user()->display_name }}
+                         </p>
+                         <input type="hidden" name="checkout_to_type" value="user">
+                         <input type="hidden" name="assigned_user" value="{{ Auth::id() }}">
+                         <input type="hidden" name="assigned_to" value="{{ Auth::id() }}">
+                     </div>
+                 </div>
+             @endif
 
 
 
@@ -145,16 +159,26 @@
             </div>
           </div>
        </div>
-          <x-redirect_submit_options
-                  index_route="accessories.index"
-                  :button_label="trans('general.checkout')"
-                  :options="[
-                        'index' => trans('admin/hardware/form.redirect_to_all', ['type' => trans('general.accessories')]),
-                        'item' => trans('admin/hardware/form.redirect_to_type', ['type' => trans('general.accessory')]),
-                        'target' => trans('admin/hardware/form.redirect_to_checked_out_to'),
-
-                       ]"
-          />
+          @if (Auth::user()->hasAccess('users.view'))
+              <x-redirect_submit_options
+                      index_route="accessories.index"
+                      :button_label="trans('general.checkout')"
+                      :options="[
+                            'index' => trans('admin/hardware/form.redirect_to_all', ['type' => trans('general.accessories')]),
+                            'item' => trans('admin/hardware/form.redirect_to_type', ['type' => trans('general.accessory')]),
+                            'target' => trans('admin/hardware/form.redirect_to_checked_out_to'),
+                           ]"
+              />
+          @else
+              <x-redirect_submit_options
+                      index_route="accessories.index"
+                      :button_label="trans('general.checkout')"
+                      :options="[
+                            'index' => trans('admin/hardware/form.redirect_to_all', ['type' => trans('general.accessories')]),
+                            'item' => trans('admin/hardware/form.redirect_to_type', ['type' => trans('general.accessory')])
+                           ]"
+              />
+          @endif
     </div> <!-- .box.box-default -->
   </form>
   </div> <!-- .col-md-9-->

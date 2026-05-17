@@ -40,4 +40,14 @@ abstract class CheckoutablePermissionsPolicy extends SnipePermissionsPolicy
              || $user->hasAccess($this->columnName().'.edit')
              || $user->hasAccess($this->columnName().'.checkout');
     }
+
+    public function checkoutSelf(User $user, $item = null): bool
+    {
+        return $user->hasAccess($this->columnName().'.checkout') || $user->hasAccess($this->columnName().'.checkout_self');
+    }
+
+    public function checkinSelf(User $user, $item = null): bool
+    {
+        return $user->hasAccess($this->columnName().'.checkin') || $user->hasAccess($this->columnName().'.checkin_self');
+    }
 }

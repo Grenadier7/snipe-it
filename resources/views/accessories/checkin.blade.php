@@ -73,6 +73,7 @@
                             </div>
 
                               </div>
+                        @if (Auth::user()->hasAccess('users.view'))
                         <x-redirect_submit_options
                                 index_route="accessories.index"
                                 :button_label="trans('general.checkin')"
@@ -82,7 +83,16 @@
                                 'target' => $target_option
                                ]"
                         />
-
+                        @else
+                            <x-redirect_submit_options
+                                    index_route="accessories.index"
+                                    :button_label="trans('general.checkin')"
+                                    :options="[
+                                'index' => trans('admin/hardware/form.redirect_to_all', ['type' => trans('general.accessories')]),
+                                'item' => trans('admin/hardware/form.redirect_to_type', ['type' => trans('general.accessory')]),
+                               ]"
+                            />
+                        @endif
 
                 </div> <!-- .box.box-default -->
             </form>

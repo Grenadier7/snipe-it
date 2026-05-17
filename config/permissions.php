@@ -124,6 +124,16 @@ return [
             'permission' => 'accessories.checkin',
             'display' => true,
         ],
+        //---NEU---
+        [
+            'permission' => 'accessories.checkout_self',
+            'display' => true,
+        ],
+        [
+            'permission' => 'accessories.checkin_self',
+            'display' => true,
+        ],
+        //---------
         [
             'permission' => 'accessories.files',
             'display' => true,
@@ -152,6 +162,12 @@ return [
             'permission' => 'consumables.checkout',
             'display' => true,
         ],
+        //---Neu---
+        [
+            'permission' => 'consumables.checkout_self',
+            'display' => true,
+        ],
+        //----------
         [
             'permission' => 'consumables.files',
             'display' => true,

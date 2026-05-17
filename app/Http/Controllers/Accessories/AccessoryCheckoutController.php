@@ -30,7 +30,9 @@ class AccessoryCheckoutController extends Controller
     public function create(Accessory $accessory): View|RedirectResponse
     {
 
-        $this->authorize('checkout', $accessory);
+        if (!\Auth::user()->can('checkout', $accessory) && !\Auth::user()->can('checkoutSelf', $accessory)) {
+            abort(403, 'Unauthorized action.');
+        }
 
         if ($accessory->category) {
             // Make sure there is at least one available to checkout
@@ -60,8 +62,20 @@ class AccessoryCheckoutController extends Controller
      */
     public function store(AccessoryCheckoutRequest $request, Accessory $accessory): RedirectResponse
     {
+//        dd([
+//            '1_eingeloggter_user_id' => \Auth::id(),
+//            '2_formular_assigned_user' => $request->input('assigned_user'),
+//            '3_formular_assigned_to' => $request->input('assigned_to'),
+//            '4_formular_checkout_type' => $request->input('checkout_to_type'),
+//            '5_hat_globales_checkout_recht' => \Auth::user()->can('checkout', $accessory),
+//            '6_hat_self_checkout_recht' => \Auth::user()->can('checkoutSelf', $accessory),
+//        ]);
 
-        $this->authorize('checkout', $accessory);
+        if (!\Auth::user()->can('checkout', $accessory)) {
+            if ($request->input('assigned_to') != \Auth::id() || !\Auth::user()->can('checkoutSelf', $accessory)) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
 
         $target = $this->determineCheckoutTarget();
         session()->put(['checkout_to_type' => $target]);

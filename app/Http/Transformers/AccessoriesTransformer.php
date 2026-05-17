@@ -74,7 +74,7 @@ class AccessoriesTransformer
         ];
 
         $permissions_array['available_actions'] = [
-            'checkout' => Gate::allows('checkout', Accessory::class),
+            'checkout' => Gate::allows('checkout', $accessory) || Gate::allows('checkoutSelf', $accessory),
             'checkin' => false,
             'update' => Gate::allows('update', Accessory::class),
             'delete' => $accessory->checkouts_count === 0 && Gate::allows('delete', Accessory::class),
@@ -98,6 +98,7 @@ class AccessoriesTransformer
         $array = [];
 
         foreach ($accessory_checkouts as $checkout) {
+            $can_checkin = \Auth::user()->can('checkin', \App\Models\Accessory::class) || ($checkout->assigned_to == \Auth::id() && \Auth::user()->can('checkinSelf', \App\Models\Accessory::class));
             $array[] = [
                 'id' => $checkout->id,
                 'assigned_to' => $this->transformAssignedTo($checkout),
@@ -107,7 +108,7 @@ class AccessoriesTransformer
                     'name' => e($checkout->adminuser->present()->fullName),
                 ] : null,
                 'created_at' => Helper::getFormattedDateObject($checkout->created_at, 'datetime'),
-                'available_actions' => Gate::allows('checkout', Accessory::class) ? ['checkin' => true] : ['checkin' => false],
+                'available_actions' => ['checkin' => $can_checkin],
             ];
         }
 

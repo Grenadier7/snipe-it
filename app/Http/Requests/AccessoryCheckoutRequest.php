@@ -13,7 +13,7 @@ class AccessoryCheckoutRequest extends ImageUploadRequest
      */
     public function authorize(): bool
     {
-        return Gate::allows('checkout', Accessory::class);
+        return \Auth::user()->hasAccess('accessories.checkout') || \Auth::user()->hasAccess('accessories.checkout_self');
     }
 
     public function prepareForValidation(): void
