@@ -460,4 +460,12 @@ return [
     'inherit' => 'Inherit Permission for :area from permission groups',
     'use_groups' => 'We strongly suggest using Permission Groups instead of assigning individual permissions for easier management.',
 
+    'checkout_self' => [
+        'name' => 'Self-Checkout',
+        'help' => 'Allows a user to check out assets exclusively to themselves.',
+    ],
+    'checkin_self' => [
+        'name' => 'Self-Checkin',
+        'help' => 'Allows a user to check in assets exclusively from themselves.',
+    ],
 ];

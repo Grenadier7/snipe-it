@@ -460,4 +460,12 @@ return [
     'inherit' => 'Berechtigungen für :area von Berechtigungsgruppen Vererben',
     'use_groups' => 'Wir empfehlen dringend, Berechtigungsgruppen zu verwenden, anstatt individuelle Berechtigungen für eine einfachere Verwaltung zuzuweisen.',
 
+    'checkout_self' => [
+        'name' => 'Self-Checkout',
+        'help' => 'Erlaubt dem Benutzer, ein Gerät ausschließlich an sich selbst auszugeben.',
+    ],
+    'checkin_self' => [
+        'name' => 'Self-Checkin',
+        'help' => 'Erlaubt dem Benutzer, ein Gerät ausschließlich von sich selbst zurückzunehmen.',
+    ],
 ];
