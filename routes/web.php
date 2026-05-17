@@ -34,6 +34,7 @@ use App\Http\Controllers\ViewAssetsController;
 use App\Livewire\Importer;
 use App\Mail\CheckoutComponentMail;
 use App\Models\ReportTemplate;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Tabuna\Breadcrumbs\Trail;
 
@@ -760,6 +761,22 @@ Route::middleware(['auth'])->get(
 )->name('lendit.checkouts')
     ->breadcrumbs(fn (Trail $trail) => $trail->parent('lendit.dashboard')
         ->push('Ausleihuebersicht', route('lendit.checkouts'))
+    );
+
+Route::middleware(['auth'])->get(
+    '/lendit/user-history',
+    [LendITDashboardController::class, 'userHistory']
+)->name('lendit.user-history')
+    ->breadcrumbs(fn (Trail $trail) => $trail->parent('lendit.dashboard')
+        ->push('Benutzerhistorie', route('lendit.user-history'))
+    );
+
+Route::middleware(['auth'])->get(
+    '/lendit/users/{user}/history',
+    [LendITDashboardController::class, 'userHistory']
+)->name('lendit.users.history')
+    ->breadcrumbs(fn (Trail $trail, User $user) => $trail->parent('lendit.user-history')
+        ->push($user->display_name, route('lendit.users.history', $user))
     );
 
 Route::middleware(['auth'])->get(
