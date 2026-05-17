@@ -13,6 +13,7 @@ LendIT @parent
                     <h2 class="box-title">LendIT-Inventarübersicht</h2>
                     @can('reports.view')
                     <div class="box-tools pull-right">
+                        <a class="btn btn-sm btn-default" href="{{ route('lendit.user-history') }}">Benutzerhistorie</a>
                         <a class="btn btn-sm btn-primary" href="{{ route('lendit.checkouts') }}">Ausleihübersicht</a>
                     </div>
                     @endcan

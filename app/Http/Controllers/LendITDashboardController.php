@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Accessory;
 use App\Models\AccessoryCheckout;
+use App\Models\Actionlog;
 use App\Models\Asset;
 use App\Models\Category;
 use App\Models\Consumable;
@@ -181,6 +182,85 @@ class LendITDashboardController extends Controller
             'today' => $today,
             'assets' => $assets,
             'accessoryCheckouts' => $accessoryCheckouts,
+        ]);
+    }
+
+    public function userHistory(Request $request, ?User $user = null): View
+    {
+        $this->authorize('reports.view');
+
+        $userSearch = trim((string) $request->input('user_search', ''));
+        $historySearch = trim((string) $request->input('history_search', ''));
+        $selectedUserId = $user?->id ?: ($request->integer('user_id') ?: null);
+
+        $users = User::select('id', 'first_name', 'last_name', 'display_name', 'username')
+            ->where('activated', 1)
+            ->when($userSearch !== '', function ($query) use ($userSearch) {
+                $query->where(function ($query) use ($userSearch) {
+                    $query->where('username', 'like', "%{$userSearch}%")
+                        ->orWhere('first_name', 'like', "%{$userSearch}%")
+                        ->orWhere('last_name', 'like', "%{$userSearch}%")
+                        ->orWhere('display_name', 'like', "%{$userSearch}%")
+                        ->orWhere('email', 'like', "%{$userSearch}%");
+                });
+            })
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->limit(250)
+            ->get();
+
+        $selectedUser = $user ?: ($selectedUserId ? User::withTrashed()->find($selectedUserId) : null);
+
+        $assets = collect();
+        $accessoryCheckouts = collect();
+        $history = collect();
+
+        if ($selectedUser) {
+            $assets = Asset::with(['model.category'])
+                ->where('assigned_type', User::class)
+                ->where('assigned_to', $selectedUser->id)
+                ->orderByDesc('last_checkout')
+                ->get();
+
+            $accessoryCheckouts = AccessoryCheckout::with(['accessory.category'])
+                ->where('assigned_type', User::class)
+                ->where('assigned_to', $selectedUser->id)
+                ->orderByDesc('created_at')
+                ->get();
+
+            $history = Actionlog::with(['item', 'adminuser'])
+                ->where('target_type', User::class)
+                ->where('target_id', $selectedUser->id)
+                ->whereIn('action_type', ['checkout', 'checkin from', 'force checkin'])
+                ->when($historySearch !== '', function ($query) use ($historySearch) {
+                    $query->where(function ($query) use ($historySearch) {
+                        $query->where('action_type', 'like', "%{$historySearch}%")
+                            ->orWhere('note', 'like', "%{$historySearch}%")
+                            ->orWhereHasMorph('item', [Asset::class, Accessory::class, Consumable::class], function ($query, string $type) use ($historySearch) {
+                                $query->where('name', 'like', "%{$historySearch}%");
+
+                                if ($type === Asset::class) {
+                                    $query->orWhere('asset_tag', 'like', "%{$historySearch}%")
+                                        ->orWhere('serial', 'like', "%{$historySearch}%");
+                                }
+                            });
+                    });
+                })
+                ->orderByDesc('action_date')
+                ->orderByDesc('created_at')
+                ->limit(100)
+                ->get();
+        }
+
+        return view('lendit.user-history', [
+            'users' => $users,
+            'userSearch' => $userSearch,
+            'historySearch' => $historySearch,
+            'selectedUserId' => $selectedUserId,
+            'selectedUser' => $selectedUser,
+            'assets' => $assets,
+            'accessoryCheckouts' => $accessoryCheckouts,
+            'history' => $history,
         ]);
     }
 }
