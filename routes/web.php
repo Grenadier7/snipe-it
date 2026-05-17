@@ -16,6 +16,7 @@ use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\DepreciationsController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\LendITDashboardController;
 use App\Http\Controllers\LabelsController;
 use App\Http\Controllers\ManufacturersController;
 use App\Http\Controllers\ModalController;
@@ -744,6 +745,14 @@ Route::withoutMiddleware(['web'])->get(
     '/health',
     [HealthController::class, 'get']
 )->name('health');
+
+Route::middleware(['auth'])->get(
+    '/lendit',
+    [LendITDashboardController::class, 'index']
+)->name('lendit.dashboard')
+    ->breadcrumbs(fn (Trail $trail) => $trail->parent('home')
+        ->push('LendIT', route('lendit.dashboard'))
+    );
 
 Route::middleware(['auth'])->get(
     '/',

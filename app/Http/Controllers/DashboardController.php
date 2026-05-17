@@ -54,8 +54,7 @@ class DashboardController extends Controller
         } else {
             Session::reflash();
 
-            // Redirect to the profile page
-            return redirect()->intended('account/view-assets');
+            return redirect()->intended(route('lendit.dashboard'));
         }
     }
 }
