@@ -14,14 +14,49 @@ LendIT @parent
                 </div>
                 <div class="box-body">
                     <form method="GET" action="{{ route('lendit.dashboard') }}">
-                        <div class="input-group">
-                            <input type="text" name="search" class="form-control" value="{{ $search }}" placeholder="Inventar suchen">
-                            <span class="input-group-btn">
-                                <button class="btn btn-primary" type="submit">Suchen</button>
-                                @if ($search !== '')
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="lendit-search">Suche</label>
+                                <input id="lendit-search" type="text" name="search" class="form-control" value="{{ $search }}" placeholder="Name, Inventarnummer oder Seriennummer">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="lendit-category">Kategorie</label>
+                                <select id="lendit-category" name="category_id" class="form-control">
+                                    <option value="">Alle Kategorien</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->id }}" @selected($categoryId === $category->id)>
+                                            {{ $category->name }} ({{ $category->category_type }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="lendit-location">Standort</label>
+                                <select id="lendit-location" name="location_id" class="form-control">
+                                    <option value="">Alle Standorte</option>
+                                    @foreach ($locations as $location)
+                                        <option value="{{ $location->id }}" @selected($locationId === $location->id)>
+                                            {{ $location->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="lendit-availability">Verfugbarkeit</label>
+                                <select id="lendit-availability" name="availability" class="form-control">
+                                    <option value="">Alle</option>
+                                    <option value="available" @selected($availability === 'available')>Verfugbar</option>
+                                    <option value="unavailable" @selected($availability === 'unavailable')>Nicht verfugbar</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-md-12">
+                                <button class="btn btn-primary" type="submit">Filtern</button>
+                                @if ($search !== '' || $categoryId || $locationId || $availability)
                                     <a class="btn btn-default" href="{{ route('lendit.dashboard') }}">Zurucksetzen</a>
                                 @endif
-                            </span>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -40,6 +75,7 @@ LendIT @parent
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Kategorie</th>
                                 <th>Status</th>
                                 <th>Standort</th>
                             </tr>
@@ -52,11 +88,12 @@ LendIT @parent
                                             {{ $asset->name ?: $asset->asset_tag }}
                                         </a>
                                     </td>
+                                    <td>{{ optional(optional($asset->model)->category)->name ?: '-' }}</td>
                                     <td>{{ optional($asset->status)->name ?: '-' }}</td>
                                     <td>{{ optional($asset->location ?: $asset->defaultLoc)->name ?: '-' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3">Keine Assets gefunden.</td></tr>
+                                <tr><td colspan="4">Keine Assets gefunden.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -74,6 +111,7 @@ LendIT @parent
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Kategorie</th>
                                 <th>Verfugbar</th>
                                 <th>Standort</th>
                             </tr>
@@ -86,11 +124,12 @@ LendIT @parent
                                             {{ $accessory->name }}
                                         </a>
                                     </td>
+                                    <td>{{ optional($accessory->category)->name ?: '-' }}</td>
                                     <td>{{ $accessory->numRemaining() }} / {{ $accessory->qty }}</td>
                                     <td>{{ optional($accessory->location)->name ?: '-' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3">Kein Zubehor gefunden.</td></tr>
+                                <tr><td colspan="4">Kein Zubehor gefunden.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -108,6 +147,7 @@ LendIT @parent
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Kategorie</th>
                                 <th>Verfugbar</th>
                                 <th>Standort</th>
                             </tr>
@@ -120,11 +160,12 @@ LendIT @parent
                                             {{ $consumable->name }}
                                         </a>
                                     </td>
+                                    <td>{{ optional($consumable->category)->name ?: '-' }}</td>
                                     <td>{{ $consumable->numRemaining() }} / {{ $consumable->qty }}</td>
                                     <td>{{ optional($consumable->location)->name ?: '-' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3">Kein Verbrauchsmaterial gefunden.</td></tr>
+                                <tr><td colspan="4">Kein Verbrauchsmaterial gefunden.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
