@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class LendITDashboardController extends Controller
 {
@@ -261,6 +262,101 @@ class LendITDashboardController extends Controller
             'assets' => $assets,
             'accessoryCheckouts' => $accessoryCheckouts,
             'history' => $history,
+        ]);
+    }
+
+    public function statistics(): View
+    {
+        $this->authorize('reports.view');
+
+        $today = Carbon::today();
+
+        $assetTotal = Asset::count();
+        $assetCheckedOut = Asset::where('assigned_type', User::class)
+            ->whereNotNull('assigned_to')
+            ->count();
+        $assetAvailable = Asset::whereNull('assigned_to')
+            ->whereHas('status', function ($query) {
+                $query->where('deployable', 1)
+                    ->where('archived', 0);
+            })
+            ->count();
+        $assetOverdue = Asset::where('assigned_type', User::class)
+            ->whereNotNull('assigned_to')
+            ->whereNotNull('expected_checkin')
+            ->whereDate('expected_checkin', '<', $today)
+            ->count();
+
+        $accessoryTotalQty = (int) Accessory::sum('qty');
+        $accessoryCheckedOut = AccessoryCheckout::where('assigned_type', User::class)->count();
+        $accessoryAvailable = max($accessoryTotalQty - $accessoryCheckedOut, 0);
+
+        $consumableTotalQty = (int) Consumable::sum('qty');
+        $consumableIssued = (int) DB::table('consumables_users')->count();
+        $consumableAvailable = max($consumableTotalQty - $consumableIssued, 0);
+
+        $topLoanedItems = Actionlog::with('item')
+            ->select('item_type', 'item_id', DB::raw('count(*) as checkout_count'))
+            ->where('action_type', 'checkout')
+            ->whereIn('item_type', [Asset::class, Accessory::class, Consumable::class])
+            ->whereNotNull('item_id')
+            ->groupBy('item_type', 'item_id')
+            ->orderByDesc('checkout_count')
+            ->limit(10)
+            ->get();
+
+        $recentCheckouts = Actionlog::with(['item', 'target'])
+            ->where('action_type', 'checkout')
+            ->where('target_type', User::class)
+            ->whereIn('item_type', [Asset::class, Accessory::class, Consumable::class])
+            ->orderByDesc('action_date')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        $categoryStats = collect()
+            ->merge(
+                Asset::join('models', 'assets.model_id', '=', 'models.id')
+                    ->join('categories', 'models.category_id', '=', 'categories.id')
+                    ->select('categories.name', DB::raw("'Assets' as type"), DB::raw('count(*) as total'))
+                    ->groupBy('categories.name')
+                    ->orderByDesc('total')
+                    ->limit(5)
+                    ->get()
+            )
+            ->merge(
+                Accessory::join('categories', 'accessories.category_id', '=', 'categories.id')
+                    ->select('categories.name', DB::raw("'Zubehör' as type"), DB::raw('sum(accessories.qty) as total'))
+                    ->groupBy('categories.name')
+                    ->orderByDesc('total')
+                    ->limit(5)
+                    ->get()
+            )
+            ->merge(
+                Consumable::join('categories', 'consumables.category_id', '=', 'categories.id')
+                    ->select('categories.name', DB::raw("'Verbrauchsmaterial' as type"), DB::raw('sum(consumables.qty) as total'))
+                    ->groupBy('categories.name')
+                    ->orderByDesc('total')
+                    ->limit(5)
+                    ->get()
+            )
+            ->sortByDesc('total')
+            ->take(10);
+
+        return view('lendit.statistics', [
+            'assetTotal' => $assetTotal,
+            'assetCheckedOut' => $assetCheckedOut,
+            'assetAvailable' => $assetAvailable,
+            'assetOverdue' => $assetOverdue,
+            'accessoryTotalQty' => $accessoryTotalQty,
+            'accessoryCheckedOut' => $accessoryCheckedOut,
+            'accessoryAvailable' => $accessoryAvailable,
+            'consumableTotalQty' => $consumableTotalQty,
+            'consumableIssued' => $consumableIssued,
+            'consumableAvailable' => $consumableAvailable,
+            'topLoanedItems' => $topLoanedItems,
+            'recentCheckouts' => $recentCheckouts,
+            'categoryStats' => $categoryStats,
         ]);
     }
 }

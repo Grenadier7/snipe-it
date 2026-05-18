@@ -764,6 +764,14 @@ Route::middleware(['auth'])->get(
     );
 
 Route::middleware(['auth'])->get(
+    '/lendit/statistics',
+    [LendITDashboardController::class, 'statistics']
+)->name('lendit.statistics')
+    ->breadcrumbs(fn (Trail $trail) => $trail->parent('lendit.dashboard')
+        ->push('Statistik', route('lendit.statistics'))
+    );
+
+Route::middleware(['auth'])->get(
     '/lendit/user-history',
     [LendITDashboardController::class, 'userHistory']
 )->name('lendit.user-history')

@@ -12,6 +12,7 @@ LendIT Ausleihübersicht @parent
                 <div class="box-header with-border">
                     <h2 class="box-title">LendIT-Ausleihübersicht</h2>
                     <div class="box-tools pull-right">
+                        <a class="btn btn-sm btn-default" href="{{ route('lendit.statistics') }}">Statistik</a>
                         <a class="btn btn-sm btn-default" href="{{ route('lendit.user-history') }}">Benutzerhistorie</a>
                         <a class="btn btn-sm btn-default" href="{{ route('lendit.dashboard') }}">Inventar</a>
                     </div>
