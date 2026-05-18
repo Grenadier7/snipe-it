@@ -11,11 +11,7 @@ LendIT Statistik @parent
             <div class="box box-default">
                 <div class="box-header with-border">
                     <h2 class="box-title">LendIT-Statistik</h2>
-                    <div class="box-tools pull-right">
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.checkouts') }}">Ausleihübersicht</a>
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.user-history') }}">Benutzerhistorie</a>
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.dashboard') }}">Inventar</a>
-                    </div>
+                    @include('lendit.partials.nav')
                 </div>
             </div>
         </div>

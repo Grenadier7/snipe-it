@@ -11,11 +11,7 @@ LendIT Ausleihübersicht @parent
             <div class="box box-default">
                 <div class="box-header with-border">
                     <h2 class="box-title">LendIT-Ausleihübersicht</h2>
-                    <div class="box-tools pull-right">
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.statistics') }}">Statistik</a>
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.user-history') }}">Benutzerhistorie</a>
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.dashboard') }}">Inventar</a>
-                    </div>
+                    @include('lendit.partials.nav')
                 </div>
                 <div class="box-body">
                     <form method="GET" action="{{ route('lendit.checkouts') }}">
@@ -43,6 +39,42 @@ LendIT Ausleihübersicht @parent
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    @php
+        $overdueAssetCount = $assets->filter(function ($asset) use ($today) {
+            return $asset->expected_checkin && \Illuminate\Support\Carbon::parse($asset->expected_checkin)->lt($today);
+        })->count();
+    @endphp
+
+    <div class="row">
+        <div class="col-md-4 col-sm-6">
+            <div class="small-box bg-yellow">
+                <div class="inner">
+                    <h3>{{ $assets->count() }}</h3>
+                    <p>Asset-Ausleihen</p>
+                </div>
+                <div class="icon"><i class="fas fa-laptop"></i></div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="small-box bg-red">
+                <div class="inner">
+                    <h3>{{ $overdueAssetCount }}</h3>
+                    <p>Überfällige Assets</p>
+                </div>
+                <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="small-box bg-aqua">
+                <div class="inner">
+                    <h3>{{ $accessoryCheckouts->count() }}</h3>
+                    <p>Zubehör-Ausleihen</p>
+                </div>
+                <div class="icon"><i class="fas fa-plug"></i></div>
             </div>
         </div>
     </div>

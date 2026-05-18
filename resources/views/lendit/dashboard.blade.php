@@ -11,13 +11,7 @@ LendIT @parent
             <div class="box box-default">
                 <div class="box-header with-border">
                     <h2 class="box-title">LendIT-Inventarübersicht</h2>
-                    @can('reports.view')
-                    <div class="box-tools pull-right">
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.statistics') }}">Statistik</a>
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.user-history') }}">Benutzerhistorie</a>
-                        <a class="btn btn-sm btn-primary" href="{{ route('lendit.checkouts') }}">Ausleihübersicht</a>
-                    </div>
-                    @endcan
+                    @include('lendit.partials.nav')
                 </div>
                 <div class="box-body">
                     <form method="GET" action="{{ route('lendit.dashboard') }}">
@@ -94,8 +88,10 @@ LendIT @parent
                             @forelse ($assets as $asset)
                                 @php
                                     $assetAvailable = !$asset->assigned_to && optional($asset->status)->deployable && !optional($asset->status)->archived;
+                                    $expectedCheckin = $asset->expected_checkin ? \Illuminate\Support\Carbon::parse($asset->expected_checkin) : null;
+                                    $isOverdue = $expectedCheckin && $expectedCheckin->lt(\Illuminate\Support\Carbon::today());
                                 @endphp
-                                <tr>
+                                <tr class="{{ $isOverdue ? 'danger' : '' }}">
                                     <td>
                                         <a href="{{ route('hardware.show', $asset) }}">
                                             {{ $asset->name ?: $asset->asset_tag }}
@@ -112,10 +108,18 @@ LendIT @parent
                                         @endif
                                     </td>
                                     <td><span class="label label-info">Ja</span></td>
-                                    <td>{{ $asset->expected_checkin ? \Illuminate\Support\Carbon::parse($asset->expected_checkin)->format('d.m.Y') : 'Beim Checkout' }}</td>
+                                    <td>
+                                        @if ($isOverdue)
+                                            <span class="label label-danger">{{ $expectedCheckin->format('d.m.Y') }}</span>
+                                        @elseif ($expectedCheckin)
+                                            {{ $expectedCheckin->format('d.m.Y') }}
+                                        @else
+                                            Beim Checkout
+                                        @endif
+                                    </td>
                                     <td>{{ optional($asset->location ?: $asset->defaultLoc)->name ?: '-' }}</td>
                                     <td>
-                                        <a class="btn btn-xs btn-default" href="{{ route('hardware.show', $asset) }}">Details / Ausleihen</a>
+                                        <a class="btn btn-xs btn-default" href="{{ route('hardware.show', $asset) }}">Öffnen</a>
                                     </td>
                                 </tr>
                             @empty
@@ -168,7 +172,7 @@ LendIT @parent
                                     <td>Nicht definiert</td>
                                     <td>{{ optional($accessory->location)->name ?: '-' }}</td>
                                     <td>
-                                        <a class="btn btn-xs btn-default" href="{{ route('accessories.show', $accessory) }}">Details / Ausleihen</a>
+                                        <a class="btn btn-xs btn-default" href="{{ route('accessories.show', $accessory) }}">Öffnen</a>
                                     </td>
                                 </tr>
                             @empty
@@ -221,7 +225,7 @@ LendIT @parent
                                     <td>Keine Rückgabe</td>
                                     <td>{{ optional($consumable->location)->name ?: '-' }}</td>
                                     <td>
-                                        <a class="btn btn-xs btn-default" href="{{ route('consumables.show', $consumable) }}">Details / Entnehmen</a>
+                                        <a class="btn btn-xs btn-default" href="{{ route('consumables.show', $consumable) }}">Öffnen</a>
                                     </td>
                                 </tr>
                             @empty

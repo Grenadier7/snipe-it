@@ -79,7 +79,17 @@
 
 
           <!-- User -->
+          @if ($isSelfCheckout ?? false)
+            <input type="hidden" name="assigned_to" value="{{ auth()->id() }}">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">{{ trans('general.user') }}</label>
+                <div class="col-md-6">
+                    <p class="form-control-static">{{ auth()->user()->display_name }}</p>
+                </div>
+            </div>
+          @else
             @include ('partials.forms.edit.user-select', ['translated_name' => trans('general.select_user'), 'fieldname' => 'assigned_to', 'required'=> 'true'])
+          @endif
 
 
             @if ($consumable->requireAcceptance() || (string) $snipeSettings->require_accept_signature === '1' || $consumable->getEula() || ($snipeSettings->webhook_endpoint!=''))

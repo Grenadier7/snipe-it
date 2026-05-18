@@ -11,11 +11,7 @@ LendIT Benutzerhistorie @parent
             <div class="box box-default">
                 <div class="box-header with-border">
                     <h2 class="box-title">LendIT-Benutzerhistorie</h2>
-                    <div class="box-tools pull-right">
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.statistics') }}">Statistik</a>
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.checkouts') }}">Ausleihübersicht</a>
-                        <a class="btn btn-sm btn-default" href="{{ route('lendit.dashboard') }}">Inventar</a>
-                    </div>
+                    @include('lendit.partials.nav')
                 </div>
                 <div class="box-body">
                     <form method="GET" action="{{ route('lendit.user-history') }}">
@@ -109,6 +105,36 @@ LendIT Benutzerhistorie @parent
                             <dd>{{ $selectedUser->email ?: '-' }}</dd>
                         </dl>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 col-sm-6">
+                <div class="small-box bg-yellow">
+                    <div class="inner">
+                        <h3>{{ $assets->count() }}</h3>
+                        <p>Aktuelle Assets</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-laptop"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="small-box bg-aqua">
+                    <div class="inner">
+                        <h3>{{ $accessoryCheckouts->count() }}</h3>
+                        <p>Aktuelles Zubehör</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-plug"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="small-box bg-green">
+                    <div class="inner">
+                        <h3>{{ $history->count() }}</h3>
+                        <p>Historieneinträge</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-history"></i></div>
                 </div>
             </div>
         </div>
