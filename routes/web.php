@@ -793,3 +793,5 @@ Route::middleware(['auth'])->get(
 )->name('home')
     ->breadcrumbs(fn (Trail $trail) => $trail->push('Home', route('home'))
     );
+Route::get('consumables/{consumableId}/print', [App\Http\Controllers\Consumables\ConsumablesController::class, 'getPrintLabel']
+)->name('consumables.print');
