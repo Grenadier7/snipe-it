@@ -76,7 +76,7 @@ class ConsumablesTransformer
         }
 
         $permissions_array['available_actions'] = [
-            'checkout' => Gate::allows('checkout', Consumable::class),
+            'checkout' => Gate::allows('checkout', $consumable) || Gate::allows('checkoutSelf', $consumable),
             'checkin' => Gate::allows('checkin', Consumable::class),
             'update' => Gate::allows('update', Consumable::class),
             'delete' => Gate::allows('delete', Consumable::class),
