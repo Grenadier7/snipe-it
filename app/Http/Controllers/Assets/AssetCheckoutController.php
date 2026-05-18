@@ -14,10 +14,23 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+
 class AssetCheckoutController extends Controller
 {
     use CheckInOutRequest;
+
+    private function defaultExpectedCheckinDate(): string
+    {
+        $loanDays = (int) config('lendit.default_asset_loan_days', 14);
+
+        if ($loanDays < 1) {
+            $loanDays = 14;
+        }
+
+        return Carbon::today()->addDays($loanDays)->toDateString();
+    }
 
     /**
      * Returns a view that presents a form to check an asset out to a
@@ -54,7 +67,8 @@ class AssetCheckoutController extends Controller
             return view('hardware/checkout', compact('asset'))
                 ->with('statusLabel_list', Helper::deployableStatusLabelList())
                 ->with('table_name', 'Assets')
-                ->with('item', $asset);
+                ->with('item', $asset)
+                ->with('lenditDefaultExpectedCheckin', $this->defaultExpectedCheckinDate());
         }
 
         return redirect()->route('hardware.index')
@@ -108,6 +122,8 @@ class AssetCheckoutController extends Controller
             $expected_checkin = '';
             if ($request->filled('expected_checkin')) {
                 $expected_checkin = $request->input('expected_checkin');
+            } elseif ($target instanceof User) {
+                $expected_checkin = $this->defaultExpectedCheckinDate();
             }
 
             if ($request->filled('status_id')) {
