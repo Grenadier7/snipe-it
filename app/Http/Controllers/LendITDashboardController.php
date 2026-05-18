@@ -8,19 +8,22 @@ use App\Models\Actionlog;
 use App\Models\Asset;
 use App\Models\Category;
 use App\Models\Consumable;
+use App\Models\LendITTag;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class LendITDashboardController extends Controller
 {
     public function index(Request $request): View
     {
         $search = trim((string) $request->input('search', ''));
-        $tag = trim((string) $request->input('tag', ''));
+        $tagId = $request->integer('tag_id') ?: null;
         $categoryId = $request->integer('category_id') ?: null;
         $locationId = $request->integer('location_id') ?: null;
         $availability = in_array($request->input('availability'), ['available', 'unavailable'], true)
@@ -36,8 +39,8 @@ class LendITDashboardController extends Controller
                         ->orWhere('notes', 'like', "%{$search}%");
                 });
             })
-            ->when($tag !== '', function ($query) use ($tag) {
-                $query->where('notes', 'like', "%{$tag}%");
+            ->when($tagId, function ($query) use ($tagId) {
+                $this->whereHasLendITTag($query, Asset::class, 'assets.id', $tagId);
             })
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->whereHas('model', function ($query) use ($categoryId) {
@@ -80,8 +83,8 @@ class LendITDashboardController extends Controller
                         ->orWhere('model_number', 'like', "%{$search}%");
                 });
             })
-            ->when($tag !== '', function ($query) use ($tag) {
-                $query->where('notes', 'like', "%{$tag}%");
+            ->when($tagId, function ($query) use ($tagId) {
+                $this->whereHasLendITTag($query, Accessory::class, 'accessories.id', $tagId);
             })
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('category_id', $categoryId);
@@ -109,8 +112,8 @@ class LendITDashboardController extends Controller
                         ->orWhere('model_number', 'like', "%{$search}%");
                 });
             })
-            ->when($tag !== '', function ($query) use ($tag) {
-                $query->where('notes', 'like', "%{$tag}%");
+            ->when($tagId, function ($query) use ($tagId) {
+                $this->whereHasLendITTag($query, Consumable::class, 'consumables.id', $tagId);
             })
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('category_id', $categoryId);
@@ -128,12 +131,19 @@ class LendITDashboardController extends Controller
             ->limit(25)
             ->get();
 
+        $itemTags = collect()
+            ->merge($this->tagsForItems($assets, Asset::class))
+            ->merge($this->tagsForItems($accessories, Accessory::class))
+            ->merge($this->tagsForItems($consumables, Consumable::class));
+
         return view('lendit.dashboard', [
             'search' => $search,
-            'tag' => $tag,
+            'tagId' => $tagId,
             'categoryId' => $categoryId,
             'locationId' => $locationId,
             'availability' => $availability,
+            'tags' => LendITTag::orderBy('name')->get(),
+            'itemTags' => $itemTags,
             'categories' => Category::whereIn('category_type', ['asset', 'accessory', 'consumable'])
                 ->orderBy('name')
                 ->get(),
@@ -142,6 +152,65 @@ class LendITDashboardController extends Controller
             'accessories' => $accessories,
             'consumables' => $consumables,
         ]);
+    }
+
+    public function updateItemTags(Request $request): RedirectResponse
+    {
+        $this->authorize('reports.view');
+
+        $validated = $request->validate([
+            'item_type' => 'required|in:asset,accessory,consumable',
+            'item_id' => 'required|integer|min:1',
+            'tags' => 'nullable|string|max:500',
+        ]);
+
+        $typeMap = [
+            'asset' => Asset::class,
+            'accessory' => Accessory::class,
+            'consumable' => Consumable::class,
+        ];
+
+        $itemType = $typeMap[$validated['item_type']];
+        $itemType::findOrFail($validated['item_id']);
+
+        $tagIds = collect(preg_split('/[,;]+/', (string) ($validated['tags'] ?? '')))
+            ->map(fn ($tag) => trim($tag))
+            ->filter()
+            ->map(function ($tag) {
+                $name = ltrim($tag, '#');
+                $slug = Str::slug($name);
+
+                if ($slug === '') {
+                    return null;
+                }
+
+                return LendITTag::firstOrCreate(
+                    ['slug' => $slug],
+                    ['name' => $name]
+                )->id;
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        DB::table('lendit_taggables')
+            ->where('item_type', $itemType)
+            ->where('item_id', $validated['item_id'])
+            ->delete();
+
+        if ($tagIds->isNotEmpty()) {
+            DB::table('lendit_taggables')->insert(
+                $tagIds->map(fn ($tagId) => [
+                    'tag_id' => $tagId,
+                    'item_type' => $itemType,
+                    'item_id' => $validated['item_id'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])->all()
+            );
+        }
+
+        return redirect()->back()->with('success', 'LendIT-Tags wurden aktualisiert.');
     }
 
     public function checkouts(Request $request): View
@@ -209,29 +278,41 @@ class LendITDashboardController extends Controller
 
     public function userHistory(Request $request, ?User $user = null): View
     {
-        $this->authorize('reports.view');
+        $canViewAllUsers = $request->user()->can('reports.view');
 
         $userSearch = trim((string) $request->input('user_search', ''));
         $historySearch = trim((string) $request->input('history_search', ''));
-        $selectedUserId = $user?->id ?: ($request->integer('user_id') ?: null);
+        $selectedUserId = $canViewAllUsers
+            ? ($user?->id ?: ($request->integer('user_id') ?: null))
+            : $request->user()->id;
 
-        $users = User::select('id', 'first_name', 'last_name', 'display_name', 'username')
-            ->where('activated', 1)
-            ->when($userSearch !== '', function ($query) use ($userSearch) {
-                $query->where(function ($query) use ($userSearch) {
-                    $query->where('username', 'like', "%{$userSearch}%")
-                        ->orWhere('first_name', 'like', "%{$userSearch}%")
-                        ->orWhere('last_name', 'like', "%{$userSearch}%")
-                        ->orWhere('display_name', 'like', "%{$userSearch}%")
-                        ->orWhere('email', 'like', "%{$userSearch}%");
-                });
-            })
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->limit(250)
-            ->get();
+        if ($user && ! $canViewAllUsers && $user->id !== $request->user()->id) {
+            abort(403);
+        }
 
-        $selectedUser = $user ?: ($selectedUserId ? User::withTrashed()->find($selectedUserId) : null);
+        $users = collect();
+
+        if ($canViewAllUsers) {
+            $users = User::select('id', 'first_name', 'last_name', 'display_name', 'username')
+                ->where('activated', 1)
+                ->when($userSearch !== '', function ($query) use ($userSearch) {
+                    $query->where(function ($query) use ($userSearch) {
+                        $query->where('username', 'like', "%{$userSearch}%")
+                            ->orWhere('first_name', 'like', "%{$userSearch}%")
+                            ->orWhere('last_name', 'like', "%{$userSearch}%")
+                            ->orWhere('display_name', 'like', "%{$userSearch}%")
+                            ->orWhere('email', 'like', "%{$userSearch}%");
+                    });
+                })
+                ->orderBy('last_name')
+                ->orderBy('first_name')
+                ->limit(250)
+                ->get();
+        }
+
+        $selectedUser = $canViewAllUsers
+            ? ($user ?: ($selectedUserId ? User::withTrashed()->find($selectedUserId) : null))
+            : $request->user();
 
         $assets = collect();
         $accessoryCheckouts = collect();
@@ -280,6 +361,7 @@ class LendITDashboardController extends Controller
             'historySearch' => $historySearch,
             'selectedUserId' => $selectedUserId,
             'selectedUser' => $selectedUser,
+            'canViewAllUsers' => $canViewAllUsers,
             'assets' => $assets,
             'accessoryCheckouts' => $accessoryCheckouts,
             'history' => $history,
@@ -379,5 +461,33 @@ class LendITDashboardController extends Controller
             'recentCheckouts' => $recentCheckouts,
             'categoryStats' => $categoryStats,
         ]);
+    }
+
+    private function whereHasLendITTag($query, string $itemType, string $itemIdColumn, int $tagId): void
+    {
+        $query->whereExists(function ($query) use ($itemType, $itemIdColumn, $tagId) {
+            $query->select(DB::raw(1))
+                ->from('lendit_taggables')
+                ->whereColumn('lendit_taggables.item_id', $itemIdColumn)
+                ->where('lendit_taggables.item_type', $itemType)
+                ->where('lendit_taggables.tag_id', $tagId);
+        });
+    }
+
+    private function tagsForItems($items, string $itemType)
+    {
+        $itemIds = $items->pluck('id');
+
+        if ($itemIds->isEmpty()) {
+            return collect();
+        }
+
+        return DB::table('lendit_taggables')
+            ->join('lendit_tags', 'lendit_tags.id', '=', 'lendit_taggables.tag_id')
+            ->where('lendit_taggables.item_type', $itemType)
+            ->whereIn('lendit_taggables.item_id', $itemIds)
+            ->orderBy('lendit_tags.name')
+            ->get(['lendit_taggables.item_id', 'lendit_tags.name'])
+            ->groupBy(fn ($row) => $itemType.':'.$row->item_id);
     }
 }
