@@ -2,7 +2,7 @@
     $links = [
         ['route' => 'lendit.dashboard', 'label' => 'Inventar'],
         ['route' => 'lendit.checkouts', 'label' => 'Ausleihübersicht', 'teacher' => true],
-        ['route' => 'lendit.user-history', 'label' => 'Benutzerhistorie', 'teacher' => true],
+        ['route' => 'lendit.user-history', 'label' => auth()->user()->can('reports.view') ? 'Benutzerhistorie' : 'Meine Ausleihen'],
         ['route' => 'lendit.statistics', 'label' => 'Statistik', 'teacher' => true],
     ];
 @endphp

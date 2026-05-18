@@ -755,6 +755,11 @@ Route::middleware(['auth'])->get(
         ->push('LendIT', route('lendit.dashboard'))
     );
 
+Route::middleware(['auth'])->post(
+    '/lendit/tags/item',
+    [LendITDashboardController::class, 'updateItemTags']
+)->name('lendit.tags.item.update');
+
 Route::middleware(['auth'])->get(
     '/lendit/checkouts',
     [LendITDashboardController::class, 'checkouts']
