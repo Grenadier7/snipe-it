@@ -71,10 +71,10 @@ LendIT @parent
     </div>
 
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-12">
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h2 class="box-title">Assets</h2>
+                    <h2 class="box-title">Geräte / Assets</h2>
                 </div>
                 <div class="box-body table-responsive no-padding">
                     <table class="table table-striped">
@@ -82,12 +82,18 @@ LendIT @parent
                             <tr>
                                 <th>Name</th>
                                 <th>Kategorie</th>
-                                <th>Status</th>
+                                <th>Verfügbarkeit</th>
+                                <th>Rückgabe</th>
+                                <th>Frist</th>
                                 <th>Standort</th>
+                                <th>Aktion</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($assets as $asset)
+                                @php
+                                    $assetAvailable = !$asset->assigned_to && optional($asset->status)->deployable && !optional($asset->status)->archived;
+                                @endphp
                                 <tr>
                                     <td>
                                         <a href="{{ route('hardware.show', $asset) }}">
@@ -95,11 +101,24 @@ LendIT @parent
                                         </a>
                                     </td>
                                     <td>{{ optional(optional($asset->model)->category)->name ?: '-' }}</td>
-                                    <td>{{ optional($asset->status)->name ?: '-' }}</td>
+                                    <td>
+                                        @if ($assetAvailable)
+                                            <span class="label label-success">Verfügbar</span>
+                                        @elseif ($asset->assigned_to)
+                                            <span class="label label-warning">Ausgeliehen</span>
+                                        @else
+                                            <span class="label label-default">{{ optional($asset->status)->name ?: 'Nicht verfügbar' }}</span>
+                                        @endif
+                                    </td>
+                                    <td><span class="label label-info">Ja</span></td>
+                                    <td>{{ $asset->expected_checkin ? \Illuminate\Support\Carbon::parse($asset->expected_checkin)->format('d.m.Y') : 'Beim Checkout' }}</td>
                                     <td>{{ optional($asset->location ?: $asset->defaultLoc)->name ?: '-' }}</td>
+                                    <td>
+                                        <a class="btn btn-xs btn-default" href="{{ route('hardware.show', $asset) }}">Details / Ausleihen</a>
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4">Keine Assets gefunden.</td></tr>
+                                <tr><td colspan="7">Keine Assets gefunden.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -107,10 +126,10 @@ LendIT @parent
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-12">
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h2 class="box-title">Zubehör</h2>
+                    <h2 class="box-title">Zubehör / Accessories</h2>
                 </div>
                 <div class="box-body table-responsive no-padding">
                     <table class="table table-striped">
@@ -118,12 +137,18 @@ LendIT @parent
                             <tr>
                                 <th>Name</th>
                                 <th>Kategorie</th>
-                                <th>Verfügbar</th>
+                                <th>Verfügbarkeit</th>
+                                <th>Rückgabe</th>
+                                <th>Frist</th>
                                 <th>Standort</th>
+                                <th>Aktion</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($accessories as $accessory)
+                                @php
+                                    $remaining = $accessory->numRemaining();
+                                @endphp
                                 <tr>
                                     <td>
                                         <a href="{{ route('accessories.show', $accessory) }}">
@@ -131,11 +156,22 @@ LendIT @parent
                                         </a>
                                     </td>
                                     <td>{{ optional($accessory->category)->name ?: '-' }}</td>
-                                    <td>{{ $accessory->numRemaining() }} / {{ $accessory->qty }}</td>
+                                    <td>
+                                        @if ($remaining > 0)
+                                            <span class="label label-success">{{ $remaining }} / {{ $accessory->qty }} verfügbar</span>
+                                        @else
+                                            <span class="label label-warning">Ausgeliehen</span>
+                                        @endif
+                                    </td>
+                                    <td><span class="label label-info">Ja</span></td>
+                                    <td>Nicht definiert</td>
                                     <td>{{ optional($accessory->location)->name ?: '-' }}</td>
+                                    <td>
+                                        <a class="btn btn-xs btn-default" href="{{ route('accessories.show', $accessory) }}">Details / Ausleihen</a>
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4">Kein Zubehör gefunden.</td></tr>
+                                <tr><td colspan="7">Kein Zubehör gefunden.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -143,10 +179,10 @@ LendIT @parent
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-12">
             <div class="box box-default">
                 <div class="box-header with-border">
-                    <h2 class="box-title">Verbrauchsmaterial</h2>
+                    <h2 class="box-title">Verbrauchsmaterial / Consumables</h2>
                 </div>
                 <div class="box-body table-responsive no-padding">
                     <table class="table table-striped">
@@ -154,12 +190,18 @@ LendIT @parent
                             <tr>
                                 <th>Name</th>
                                 <th>Kategorie</th>
-                                <th>Verfügbar</th>
+                                <th>Verfügbarkeit</th>
+                                <th>Rückgabe</th>
+                                <th>Frist</th>
                                 <th>Standort</th>
+                                <th>Aktion</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($consumables as $consumable)
+                                @php
+                                    $remaining = $consumable->numRemaining();
+                                @endphp
                                 <tr>
                                     <td>
                                         <a href="{{ route('consumables.show', $consumable) }}">
@@ -167,11 +209,22 @@ LendIT @parent
                                         </a>
                                     </td>
                                     <td>{{ optional($consumable->category)->name ?: '-' }}</td>
-                                    <td>{{ $consumable->numRemaining() }} / {{ $consumable->qty }}</td>
+                                    <td>
+                                        @if ($remaining > 0)
+                                            <span class="label label-success">{{ $remaining }} / {{ $consumable->qty }} verfügbar</span>
+                                        @else
+                                            <span class="label label-danger">Aufgebraucht</span>
+                                        @endif
+                                    </td>
+                                    <td><span class="label label-default">Nein</span></td>
+                                    <td>Keine Rückgabe</td>
                                     <td>{{ optional($consumable->location)->name ?: '-' }}</td>
+                                    <td>
+                                        <a class="btn btn-xs btn-default" href="{{ route('consumables.show', $consumable) }}">Details / Entnehmen</a>
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4">Kein Verbrauchsmaterial gefunden.</td></tr>
+                                <tr><td colspan="7">Kein Verbrauchsmaterial gefunden.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
