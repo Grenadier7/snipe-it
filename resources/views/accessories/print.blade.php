@@ -14,7 +14,11 @@
 <div class="id">ID: {{ $accessory->id }}</div>
 
 <div class="qr-code">
-    {!! \DNS2D::getBarcodeSVG(route('accessories.show', $accessory->id), 'QRCODE', 3, 3) !!}
+    @php
+        $barcode = new \Com\Tecnick\Barcode\Barcode;
+        $qrCode = $barcode->getBarcodeObj('QRCODE', route('accessories.show', $accessory->id), 3, 3, 'black', [-2, -2, -2, -2]);
+    @endphp
+    {!! $qrCode->getSvgCode() !!}
 </div>
 </body>
 </html>

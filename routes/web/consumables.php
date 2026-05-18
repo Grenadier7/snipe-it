@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'consumables', 'middleware' => ['auth']], function () {
     Route::get(
+        '{consumableId}/print',
+        [Consumables\ConsumablesController::class, 'getPrintLabel']
+    )->name('consumables.print');
+
+    Route::get(
         '{consumablesID}/checkout',
         [Consumables\ConsumableCheckoutController::class, 'create']
     )->name('consumables.checkout.show');

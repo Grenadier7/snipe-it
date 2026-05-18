@@ -16,9 +16,13 @@ LendIT @parent
                 <div class="box-body">
                     <form method="GET" action="{{ route('lendit.dashboard') }}">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="lendit-search">Suche</label>
-                                <input id="lendit-search" type="text" name="search" class="form-control" value="{{ $search }}" placeholder="Name, Inventarnummer oder Seriennummer">
+                                <input id="lendit-search" type="text" name="search" class="form-control" value="{{ $search }}" placeholder="Name, Beschreibung oder Nummer">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="lendit-tag">Tag</label>
+                                <input id="lendit-tag" type="text" name="tag" class="form-control" value="{{ $tag }}" placeholder="z.B. #arduino">
                             </div>
                             <div class="col-md-3">
                                 <label for="lendit-category">Kategorie</label>
@@ -31,7 +35,7 @@ LendIT @parent
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label for="lendit-location">Standort</label>
                                 <select id="lendit-location" name="location_id" class="form-control">
                                     <option value="">Alle Standorte</option>
@@ -54,7 +58,7 @@ LendIT @parent
                         <div class="row" style="margin-top: 15px;">
                             <div class="col-md-12">
                                 <button class="btn btn-primary" type="submit">Filtern</button>
-                                @if ($search !== '' || $categoryId || $locationId || $availability)
+                                @if ($search !== '' || $tag !== '' || $categoryId || $locationId || $availability)
                                     <a class="btn btn-default" href="{{ route('lendit.dashboard') }}">Zurücksetzen</a>
                                 @endif
                             </div>

@@ -464,8 +464,28 @@ return [
         'name' => 'Self-Checkout',
         'help' => 'Allows a user to check out assets exclusively to themselves.',
     ],
+    'assetscheckout-self' => [
+        'name' => 'Self-checkout assets',
+        'help' => 'Allows a user to check out assets exclusively to themselves.',
+    ],
+    'accessoriescheckout-self' => [
+        'name' => 'Self-checkout accessories',
+        'help' => 'Allows a user to check out accessories exclusively to themselves.',
+    ],
+    'consumablescheckout-self' => [
+        'name' => 'Self-checkout consumables',
+        'help' => 'Allows a user to check out consumables exclusively to themselves.',
+    ],
     'checkin_self' => [
         'name' => 'Self-Checkin',
         'help' => 'Allows a user to check in assets exclusively from themselves.',
+    ],
+    'assetscheckin-self' => [
+        'name' => 'Self-checkin assets',
+        'help' => 'Allows a user to check in assets assigned to themselves.',
+    ],
+    'accessoriescheckin-self' => [
+        'name' => 'Self-checkin accessories',
+        'help' => 'Allows a user to check in accessories assigned to themselves.',
     ],
 ];

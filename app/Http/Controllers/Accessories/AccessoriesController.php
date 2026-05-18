@@ -258,7 +258,8 @@ class AccessoriesController extends Controller
             return redirect()->route('accessories.index')->with('error', 'Zubehör nicht gefunden.');
         }
 
-        // Wir geben eine spezielle Druck-Ansicht zurück
+        $this->authorize('view', $accessory);
+
         return view('accessories/print')->with('accessory', $accessory);
     }
 }

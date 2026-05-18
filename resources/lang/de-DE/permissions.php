@@ -464,8 +464,28 @@ return [
         'name' => 'Self-Checkout',
         'help' => 'Erlaubt dem Benutzer, ein Gerät ausschließlich an sich selbst auszugeben.',
     ],
+    'assetscheckout-self' => [
+        'name' => 'Assets selbst auschecken',
+        'help' => 'Erlaubt dem Benutzer, Assets ausschliesslich an sich selbst auszugeben.',
+    ],
+    'accessoriescheckout-self' => [
+        'name' => 'Zubehoer selbst auschecken',
+        'help' => 'Erlaubt dem Benutzer, Zubehoer ausschliesslich an sich selbst auszugeben.',
+    ],
+    'consumablescheckout-self' => [
+        'name' => 'Verbrauchsmaterial selbst entnehmen',
+        'help' => 'Erlaubt dem Benutzer, Verbrauchsmaterial ausschliesslich an sich selbst auszugeben.',
+    ],
     'checkin_self' => [
         'name' => 'Self-Checkin',
         'help' => 'Erlaubt dem Benutzer, ein Gerät ausschließlich von sich selbst zurückzunehmen.',
+    ],
+    'assetscheckin-self' => [
+        'name' => 'Assets selbst einchecken',
+        'help' => 'Erlaubt dem Benutzer, eigene Assets selbst zurueckzugeben.',
+    ],
+    'accessoriescheckin-self' => [
+        'name' => 'Zubehoer selbst einchecken',
+        'help' => 'Erlaubt dem Benutzer, eigenes Zubehoer selbst zurueckzugeben.',
     ],
 ];

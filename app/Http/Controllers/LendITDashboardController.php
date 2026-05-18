@@ -20,6 +20,7 @@ class LendITDashboardController extends Controller
     public function index(Request $request): View
     {
         $search = trim((string) $request->input('search', ''));
+        $tag = trim((string) $request->input('tag', ''));
         $categoryId = $request->integer('category_id') ?: null;
         $locationId = $request->integer('location_id') ?: null;
         $availability = in_array($request->input('availability'), ['available', 'unavailable'], true)
@@ -31,8 +32,12 @@ class LendITDashboardController extends Controller
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('asset_tag', 'like', "%{$search}%")
-                        ->orWhere('serial', 'like', "%{$search}%");
+                        ->orWhere('serial', 'like', "%{$search}%")
+                        ->orWhere('notes', 'like', "%{$search}%");
                 });
+            })
+            ->when($tag !== '', function ($query) use ($tag) {
+                $query->where('notes', 'like', "%{$tag}%");
             })
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->whereHas('model', function ($query) use ($categoryId) {
@@ -69,7 +74,14 @@ class LendITDashboardController extends Controller
         $accessories = Accessory::with(['category', 'location'])
             ->withCount('checkouts as checkouts_count')
             ->when($search !== '', function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%");
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('notes', 'like', "%{$search}%")
+                        ->orWhere('model_number', 'like', "%{$search}%");
+                });
+            })
+            ->when($tag !== '', function ($query) use ($tag) {
+                $query->where('notes', 'like', "%{$tag}%");
             })
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('category_id', $categoryId);
@@ -90,7 +102,15 @@ class LendITDashboardController extends Controller
         $consumables = Consumable::with(['category', 'location'])
             ->withCount('users as consumables_users_count')
             ->when($search !== '', function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%");
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('notes', 'like', "%{$search}%")
+                        ->orWhere('item_no', 'like', "%{$search}%")
+                        ->orWhere('model_number', 'like', "%{$search}%");
+                });
+            })
+            ->when($tag !== '', function ($query) use ($tag) {
+                $query->where('notes', 'like', "%{$tag}%");
             })
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('category_id', $categoryId);
@@ -110,6 +130,7 @@ class LendITDashboardController extends Controller
 
         return view('lendit.dashboard', [
             'search' => $search,
+            'tag' => $tag,
             'categoryId' => $categoryId,
             'locationId' => $locationId,
             'availability' => $availability,
