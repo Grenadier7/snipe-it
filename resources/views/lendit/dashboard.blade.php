@@ -23,6 +23,7 @@ LendIT @parent
                             <div class="col-md-2">
                                 <label for="lendit-tag">Tag</label>
                                 <input id="lendit-tag" type="text" name="tag" class="form-control" value="{{ $tag }}" placeholder="z.B. #arduino">
+                                <p class="help-block">Filtert nach Eintraegen im Notizfeld.</p>
                             </div>
                             <div class="col-md-3">
                                 <label for="lendit-category">Kategorie</label>
