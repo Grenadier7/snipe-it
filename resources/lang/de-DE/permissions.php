@@ -426,10 +426,6 @@ return [
         'name' => 'Standort Bearbeiten',
         'note' => 'Ermöglicht Benutzern den Standort zu bearbeiten, der mit ihrem eigenen Benutzerkonto verknüpft ist.',
     ],
-    'selfcheckout-assets' => [
-        'name' => 'Assets Selbst Auschecken',
-        'note' => 'Erlaubt es Benutzern Assets ohne Admin-Intervention selbst auszuchecken.',
-    ],
     'selfview-purchase-cost' => [
         'name' => 'Kaufpreis Anzeigen',
         'note' => 'Ermöglicht den Benutzern, die Kaufpreis von Artikeln in ihrer Account-Ansicht anzuzeigen.',
@@ -467,5 +463,27 @@ return [
     'checkin_self' => [
         'name' => 'Self-Checkin',
         'help' => 'Erlaubt dem Benutzer, ein Gerät ausschließlich von sich selbst zurückzunehmen.',
+    ],
+    'assetscheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Erlaubt es dem Benutzer, Assets an sich selbst auszuchecken.',
+    ],
+    'assetscheckin-self' => [
+        'name' => 'Self-Checkin',
+        'note' => 'Erlaubt es dem Benutzer, eigene zugewiesene Assets wieder einzuchecken.',
+    ],
+
+    'accessoriescheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Erlaubt es dem Benutzer, Zubehör an sich selbst auszuchecken.',
+    ],
+    'accessoriescheckin-self' => [
+        'name' => 'Self-Checkin',
+        'note' => 'Erlaubt es dem Benutzer, eigenes zugewiesenes Zubehör wieder einzuchecken.',
+    ],
+
+    'consumablescheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Erlaubt es dem Benutzer, Verbrauchsmaterialien an sich selbst auszuchecken.',
     ],
 ];

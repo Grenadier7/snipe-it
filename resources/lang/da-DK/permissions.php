@@ -426,10 +426,6 @@ return [
         'name' => 'Edit Location',
         'note' => 'Allows users to edit the location associated with their own user account.',
     ],
-    'selfcheckout-assets' => [
-        'name' => 'Self Check Out Assets',
-        'note' => 'Allows users to check out assets to themselves without admin intervention.',
-    ],
     'selfview-purchase-cost' => [
         'name' => 'View Purchase Cost',
         'note' => 'Allows users to view the purchase cost of items in their account view.',
@@ -459,5 +455,26 @@ return [
     'deny' => 'Deny Permission for :area',
     'inherit' => 'Inherit Permission for :area from permission groups',
     'use_groups' => 'We strongly suggest using Permission Groups instead of assigning individual permissions for easier management.',
+    'assetscheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Allows the user to checkout assets to themselves.',
+    ],
+    'assetscheckin-self' => [
+        'name' => 'Self-Checkin',
+        'note' => 'Allows the user to checkin their own assigned assets.',
+    ],
 
+    'accessoriescheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Allows the user to checkout accessories to themselves.',
+    ],
+    'accessoriescheckin-self' => [
+        'name' => 'Self-Checkin',
+        'note' => 'Allows the user to checkin their own assigned accessories.',
+    ],
+
+    'consumablescheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Allows the user to checkout consumables to themselves.',
+    ],
 ];
