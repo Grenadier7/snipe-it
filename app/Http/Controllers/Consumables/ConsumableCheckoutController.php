@@ -30,8 +30,9 @@ class ConsumableCheckoutController extends Controller
 
         if ($consumable = Consumable::find($id)) {
 
-            $this->authorize('checkout', $consumable);
-
+            if (!\Auth::user()->can('checkout', $consumable) && !\Auth::user()->can('checkoutSelf', $consumable)) {
+                abort(403, 'Unauthorized action.');
+            }
             // Make sure the category is valid
             if ($consumable->category) {
 
@@ -74,8 +75,11 @@ class ConsumableCheckoutController extends Controller
             return redirect()->route('consumables.index')->with('error', trans('admin/consumables/message.not_found'));
         }
 
-        $this->authorize('checkout', $consumable);
-
+        if (!\Auth::user()->can('checkout', $consumable)) {
+            if ($request->input('assigned_to') != \Auth::id() || !\Auth::user()->can('checkoutSelf', $consumable)) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
         // If the quantity is not present in the request or is not a positive integer, set it to 1
         $quantity = $request->input('checkout_qty');
         if (! isset($quantity) || ! ctype_digit((string) $quantity) || $quantity <= 0) {

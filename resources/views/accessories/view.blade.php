@@ -91,9 +91,9 @@
                             <i class="fas fa-print"></i>
                         </a>
 
-                        @can('checkout', $accessory)
+                        @if (Auth::user()->can('checkin', $accessory) || Auth::user()->can('checkinSelf', $accessory))
                             <x-button.checkout permission="checkout" :item="$accessory" :route="route('accessories.checkout.show', $accessory->id)" />
-                        @endcan
+                        @endif
                         <x-button.delete :item="$accessory" />
                     </x-slot:buttons>
                 </x-info-panel>

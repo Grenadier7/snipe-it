@@ -61,6 +61,16 @@
         </x-page-column>
 
         <x-page-column class="col-md-3">
+            @if ($consumable->numRemaining() > 0)
+                @if (Auth::user()->can('checkout', $consumable) || Auth::user()->can('checkoutSelf', $consumable))
+                    <div style="margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 3px;">
+                        <a href="{{ route('consumables.checkout.show', $consumable->id) }}" class="btn btn-sm bg-maroon btn-checkout btn-lg btn-block" style="font-size: 18px; padding: 15px; white-space: normal; color: #fff;">
+                            <x-icon type="checkout" class="fa-fw" style="margin-right: 8px; font-size: 20px;"/>
+                            <strong>{{ trans('general.checkout') }}</strong>
+                        </a>
+                    </div>
+                @endif
+            @endif
             <x-box class="side-box expanded">
                 <x-info-panel :infoPanelObj="$consumable" img_path="{{ app('consumables_upload_url') }}">
 
@@ -68,7 +78,9 @@
                         <x-button.edit :item="$consumable" :route="route('consumables.edit', $consumable->id)"/>
                         <x-button.clone :item="$consumable" :route="route('consumables.clone.create', $consumable->id)"/>
                         <x-button.delete :item="$consumable"/>
+                        @if (Auth::user()->can('checkin', $consumable) || Auth::user()->can('checkinSelf', $consumable))
                         <x-button.checkout :item="$consumable" :route="route('consumables.checkout.show', $consumable->id)" />
+                        @endif
                     </x-slot:buttons>
 
                 </x-info-panel>
