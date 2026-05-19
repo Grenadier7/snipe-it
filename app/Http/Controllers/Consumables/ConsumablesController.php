@@ -258,4 +258,15 @@ class ConsumablesController extends Controller
             ->with('cloned_model', $consumable_to_close)
             ->with('item', $consumable);
     }
+
+    public function getPrintLabel($consumableId): View|RedirectResponse
+    {
+        if (is_null($consumable = Consumable::find($consumableId))) {
+            return redirect()->route('consumables.index')->with('error', trans('admin/consumables/message.not_found'));
+        }
+
+        $this->authorize('view', $consumable);
+
+        return view('consumables/print')->with('consumable', $consumable);
+    }
 }

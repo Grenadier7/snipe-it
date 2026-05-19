@@ -16,6 +16,7 @@ use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\DepreciationsController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\LendITDashboardController;
 use App\Http\Controllers\LabelsController;
 use App\Http\Controllers\ManufacturersController;
 use App\Http\Controllers\ModalController;
@@ -33,6 +34,7 @@ use App\Http\Controllers\ViewAssetsController;
 use App\Livewire\Importer;
 use App\Mail\CheckoutComponentMail;
 use App\Models\ReportTemplate;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Tabuna\Breadcrumbs\Trail;
 
@@ -746,8 +748,55 @@ Route::withoutMiddleware(['web'])->get(
 )->name('health');
 
 Route::middleware(['auth'])->get(
+    '/lendit',
+    [LendITDashboardController::class, 'index']
+)->name('lendit.dashboard')
+    ->breadcrumbs(fn (Trail $trail) => $trail->parent('home')
+        ->push('LendIT', route('lendit.dashboard'))
+    );
+
+Route::middleware(['auth'])->post(
+    '/lendit/tags/item',
+    [LendITDashboardController::class, 'updateItemTags']
+)->name('lendit.tags.item.update');
+
+Route::middleware(['auth'])->get(
+    '/lendit/checkouts',
+    [LendITDashboardController::class, 'checkouts']
+)->name('lendit.checkouts')
+    ->breadcrumbs(fn (Trail $trail) => $trail->parent('lendit.dashboard')
+        ->push('Ausleihuebersicht', route('lendit.checkouts'))
+    );
+
+Route::middleware(['auth'])->get(
+    '/lendit/statistics',
+    [LendITDashboardController::class, 'statistics']
+)->name('lendit.statistics')
+    ->breadcrumbs(fn (Trail $trail) => $trail->parent('lendit.dashboard')
+        ->push('Statistik', route('lendit.statistics'))
+    );
+
+Route::middleware(['auth'])->get(
+    '/lendit/user-history',
+    [LendITDashboardController::class, 'userHistory']
+)->name('lendit.user-history')
+    ->breadcrumbs(fn (Trail $trail) => $trail->parent('lendit.dashboard')
+        ->push('Benutzerhistorie', route('lendit.user-history'))
+    );
+
+Route::middleware(['auth'])->get(
+    '/lendit/users/{user}/history',
+    [LendITDashboardController::class, 'userHistory']
+)->name('lendit.users.history')
+    ->breadcrumbs(fn (Trail $trail, User $user) => $trail->parent('lendit.user-history')
+        ->push($user->display_name, route('lendit.users.history', $user))
+    );
+
+Route::middleware(['auth'])->get(
     '/',
     [DashboardController::class, 'index']
 )->name('home')
     ->breadcrumbs(fn (Trail $trail) => $trail->push('Home', route('home'))
     );
+Route::get('consumables/{consumableId}/print', [App\Http\Controllers\Consumables\ConsumablesController::class, 'getPrintLabel']
+)->name('consumables.print');

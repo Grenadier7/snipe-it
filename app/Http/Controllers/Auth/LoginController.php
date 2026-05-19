@@ -39,7 +39,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/';
+    protected $redirectTo = '/lendit';
 
     /**
      * @var Saml
@@ -65,7 +65,7 @@ class LoginController extends Controller
         $this->loginViaRemoteUser($request);
         $this->loginViaSaml($request);
         if (Auth::check()) {
-            return redirect()->intended('/');
+            return redirect()->route('lendit.dashboard');
         }
 
         if (! $request->session()->has('loggedout')) {
@@ -332,8 +332,7 @@ class LoginController extends Controller
             $user->saveQuietly();
         }
 
-        // Redirect to the users page
-        return redirect()->intended()->with('success', trans('auth/message.signin.success'));
+        return redirect()->route('lendit.dashboard')->with('success', trans('auth/message.signin.success'));
     }
 
     /**
@@ -435,7 +434,7 @@ class LoginController extends Controller
             $user->saveQuietly();
             $request->session()->put('2fa_authed', $user->id);
 
-            return redirect()->intended()->with('success', trans('auth/message.signin.success'));
+            return redirect()->route('lendit.dashboard')->with('success', trans('auth/message.signin.success'));
         }
 
         return redirect()->route('two-factor')->with('error', trans('auth/message.two_factor.invalid_code'));
@@ -522,6 +521,6 @@ class LoginController extends Controller
 
     public function redirectTo()
     {
-        return Session::get('backUrl') ? Session::get('backUrl') : $this->redirectTo;
+        return $this->redirectTo;
     }
 }

@@ -15,12 +15,18 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        if (Setting::getSettings()?->alerts_enabled === 1) {
+        $alertsEnabled = Setting::getSettings()?->alerts_enabled === 1;
+
+        if ($alertsEnabled) {
             $schedule->command('snipeit:inventory-alerts')->daily();
             $schedule->command('snipeit:expiring-alerts')->daily();
-            $schedule->command('snipeit:expected-checkin')->daily();
             $schedule->command('snipeit:upcoming-audits')->daily();
         }
+
+        if ($alertsEnabled || config('lendit.return_reminders_enabled')) {
+            $schedule->command('snipeit:expected-checkin')->daily();
+        }
+
         $schedule->command('snipeit:backup')->weekly();
         $schedule->command('backup:clean')->daily();
         $schedule->command('auth:clear-resets')->everyFifteenMinutes();
