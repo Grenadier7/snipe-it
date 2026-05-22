@@ -108,6 +108,9 @@ RUN \
 #global install of composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+RUN mkdir -p /var/www/html/bootstrap/cache \
+ && chown -R docker:staff /var/www/html/bootstrap/cache \
+ && chmod -R 775 /var/www/html/bootstrap/cache
 # Get dependencies
 USER docker
 RUN COMPOSER_CACHE_DIR=/dev/null composer install --no-dev --working-dir=/var/www/html && rm -rf /var/www/html/vendor/*/*/.git
