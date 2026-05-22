@@ -426,10 +426,6 @@ return [
         'name' => 'Standort Aktualisieren',
         'note' => 'Ermöglicht Benutzern den Standort zu bearbeiten, der mit ihrem eigenen Benutzerkonto verknüpft ist.',
     ],
-    'selfcheckout-assets' => [
-        'name' => 'Assets Selbst Auschecken',
-        'note' => 'Erlaubt es Benutzern Assets ohne Admin-Intervention selbst auszuchecken.',
-    ],
     'selfview-purchase-cost' => [
         'name' => 'Einkaufspreis Anzeigen',
         'note' => 'Ermöglicht den Benutzern, den Einkaufspreis von Artikeln in ihrer Account-Ansicht anzuzeigen.',
@@ -459,5 +455,26 @@ return [
     'deny' => 'Verweigere Berechtigungen für :area',
     'inherit' => 'Alle Berechtigungen für :area von Berechtigungsgruppen vererben',
     'use_groups' => 'Wir empfehlen dringend, Berechtigungsgruppen zu verwenden, anstatt individuelle Berechtigungen für eine einfachere Verwaltung zuzuweisen.',
+    'assetscheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Erlaubt es dem Benutzer, Assets an sich selbst auszuchecken.',
+    ],
+    'assetscheckin-self' => [
+        'name' => 'Self-Checkin',
+        'note' => 'Erlaubt es dem Benutzer, eigene zugewiesene Assets wieder einzuchecken.',
+    ],
 
+    'accessoriescheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Erlaubt es dem Benutzer, Zubehör an sich selbst auszuchecken.',
+    ],
+    'accessoriescheckin-self' => [
+        'name' => 'Self-Checkin',
+        'note' => 'Erlaubt es dem Benutzer, eigenes zugewiesenes Zubehör wieder einzuchecken.',
+    ],
+
+    'consumablescheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Erlaubt es dem Benutzer, Verbrauchsmaterialien an sich selbst auszuchecken.',
+    ],
 ];

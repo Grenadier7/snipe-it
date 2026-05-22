@@ -79,18 +79,19 @@
 
 
           <!-- User -->
-          @if ($isSelfCheckout ?? false)
-            <input type="hidden" name="assigned_to" value="{{ auth()->id() }}">
-            <div class="form-group">
-                <label class="col-sm-3 control-label">{{ trans('general.user') }}</label>
-                <div class="col-md-6">
-                    <p class="form-control-static">{{ auth()->user()->display_name }}</p>
-                </div>
-            </div>
-          @else
-            @include ('partials.forms.edit.user-select', ['translated_name' => trans('general.select_user'), 'fieldname' => 'assigned_to', 'required'=> 'true'])
-          @endif
-
+              @if (Auth::user()->hasAccess('consumables.checkout'))
+                  @include ('partials.forms.edit.user-select', ['translated_name' => trans('general.user'), 'fieldname' => 'assigned_to'])
+              @else
+                  <div class="form-group">
+                      <label class="col-sm-3 control-label">{{ trans('admin/hardware/form.checkout_to') }}</label>
+                      <div class="col-md-8">
+                          <p class="form-control-static" style="padding-top: 7px;">
+                              <i class="fas fa-user"></i> {{ Auth::user()->display_name }}
+                          </p>
+                          <input type="hidden" name="assigned_to" value="{{ Auth::id() }}">
+                      </div>
+                  </div>
+              @endif
 
             @if ($consumable->requireAcceptance() || (string) $snipeSettings->require_accept_signature === '1' || $consumable->getEula() || ($snipeSettings->webhook_endpoint!=''))
               <div class="form-group notification-callout">

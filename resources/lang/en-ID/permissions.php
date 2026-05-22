@@ -459,5 +459,26 @@ return [
     'deny' => 'Deny Permission for :area',
     'inherit' => 'Inherit Permission for :area from permission groups',
     'use_groups' => 'We strongly suggest using Permission Groups instead of assigning individual permissions for easier management.',
+    'assetscheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Allows the user to checkout assets to themselves.',
+    ],
+    'assetscheckin-self' => [
+        'name' => 'Self-Checkin',
+        'note' => 'Allows the user to checkin their own assigned assets.',
+    ],
 
+    'accessoriescheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Allows the user to checkout accessories to themselves.',
+    ],
+    'accessoriescheckin-self' => [
+        'name' => 'Self-Checkin',
+        'note' => 'Allows the user to checkin their own assigned accessories.',
+    ],
+
+    'consumablescheckout-self' => [
+        'name' => 'Self-Checkout',
+        'note' => 'Allows the user to checkout consumables to themselves.',
+    ],
 ];

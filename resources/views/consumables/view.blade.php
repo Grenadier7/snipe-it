@@ -71,30 +71,16 @@
                     </div>
                 @endif
             @endif
-
             <x-box class="side-box expanded">
                 <x-info-panel :infoPanelObj="$consumable" img_path="{{ app('consumables_upload_url') }}">
 
                     <x-slot:buttons>
                         <x-button.edit :item="$consumable" :route="route('consumables.edit', $consumable->id)"/>
                         <x-button.clone :item="$consumable" :route="route('consumables.clone.create', $consumable->id)"/>
-                        <a href="{{ route('consumables.print', $consumable->id) }}" class="btn btn-sm btn-default" target="_blank" data-tooltip="true" title="Label drucken">
-                            <i class="fas fa-print"></i>
-                        </a>
                         <x-button.delete :item="$consumable"/>
+                        @if (Auth::user()->can('checkin', $consumable) || Auth::user()->can('checkinSelf', $consumable))
                         <x-button.checkout :item="$consumable" :route="route('consumables.checkout.show', $consumable->id)" />
-                    </x-slot:buttons>
-                    <x-slot:buttons>
-                        <x-button.edit :item="$consumable" :route="route('consumables.edit', $consumable->id)"/>
-
-                        <x-button.clone :item="$consumable" :route="route('consumables.clone.create', $consumable->id)"/>
-
-                        <a href="{{ route('consumables.print', $consumable->id) }}" class="btn btn-sm btn-default" target="_blank" data-tooltip="true" title="Label drucken">
-                            <i class="fas fa-print"></i>
-                        </a>
-
-                        <x-button.checkout permission="checkout" :item="$consumable" :route="route('consumables.checkout.show', $consumable->id)" />
-                        <x-button.delete :item="$consumable" />
+                        @endif
                     </x-slot:buttons>
 
                 </x-info-panel>
